@@ -1,0 +1,42 @@
+﻿<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <base href="/" />
+    
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#1cb0f6" />
+    
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Base" />
+    <link rel="icon" type="image/png" href="favicon.png" />
+
+    <ResourcePreloader />
+    <link rel="stylesheet" href="@Assets["app.css"]" />
+    <link rel="stylesheet" href="@Assets["FeedQuestoes.styles.css"]" />
+    <ImportMap />
+    <HeadOutlet @rendermode="InteractiveWebAssembly" />
+</head>
+
+<body>
+    <Routes @rendermode="InteractiveWebAssembly" />
+    <script src="@Assets["_framework/blazor.web.js"]"></script>
+
+    <script>
+        if ('serviceWorker' in navigator) {
+        // O '?v=1' força o navegador a baixar o arquivo real, driblando o cache
+        navigator.serviceWorker.register('/service-worker.js?v=1', { updateViaCache: 'none' })
+        .then(reg => console.log('✅ Trabalhador de serviço ativado!', reg.scope))
+        .catch(err => console.error('❌ Falha no motor:', err));
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+        console.log('🌟 O ALVARÁ DE INSTALAÇÃO FOI LIBERADO!');
+        });
+        }
+    </script>
+</body>
+
+</html>

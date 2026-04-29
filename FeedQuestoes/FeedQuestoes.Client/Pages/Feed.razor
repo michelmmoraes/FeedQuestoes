@@ -1,0 +1,126 @@
+﻿@page "/resolver"
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>Mural Coletivo | Base de Questões</PageTitle>
+
+<style>
+    .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 40px; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .topo-app { background: #fff; padding: 20px; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 10; display: flex; justify-content: space-between; align-items: center; }
+    
+    .card-feed { background: #ffffff; border-radius: 20px; border: 2px solid #e5e7eb; box-shadow: 0 6px 0 #e5e7eb; margin-bottom: 20px; padding: 20px; transition: transform 0.1s, box-shadow 0.1s; cursor: pointer; display: flex; flex-direction: column; gap: 12px; }
+    .card-feed:active { transform: translateY(4px); box-shadow: 0 2px 0 #e5e7eb; }
+    .card-feed:hover { border-color: #1cb0f6; }
+    
+    .tag-tipo { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; padding: 6px 12px; border-radius: 12px; display: inline-block; }
+    .tag-multipla { background-color: #ddf4ff; color: #1cb0f6; border: 2px solid #1cb0f6; }
+    .tag-certoerrado { background-color: #f4eaff; color: #b146fa; border: 2px solid #b146fa; }
+    
+    .enunciado-preview { font-size: 1.05rem; font-weight: 600; color: #4b4b4b; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+    
+    .rodape-card { display: flex; justify-content: space-between; align-items: center; border-top: 2px dashed #e5e7eb; padding-top: 12px; margin-top: 5px; }
+    
+    .btn-enfrentar { background-color: #1cb0f6; color: white; border: none; border-radius: 12px; padding: 8px 16px; font-weight: bold; box-shadow: 0 4px 0 #1899d6; transition: all 0.1s; }
+    .card-feed:active .btn-enfrentar { transform: translateY(2px); box-shadow: 0 2px 0 #1899d6; }
+</style>
+
+<div class="bg-jogavel">
+    
+    <div class="topo-app">
+        <div>
+            <h5 class="fw-bold mb-0 text-dark" style="letter-spacing: -0.5px;">🌍 Mural Coletivo</h5>
+            <small class="text-muted fw-bold">Escolha sua batalha</small>
+        </div>
+        <button class="btn btn-light fw-bold border border-secondary rounded-pill" @onclick="IrParaForja">
+            + Criar
+        </button>
+    </div>
+
+    <div class="container-fluid px-3 py-4" style="max-width: 600px; margin: 0 auto;">
+        
+        @if (carregando)
+        {
+            <div class="text-center text-muted mt-5 fw-bold fs-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <p>Mapeando o conhecimento da base...</p>
+            </div>
+        }
+        else if (!listaQuestoes.Any())
+        {
+            <div class="text-center py-5">
+                <span class="fs-1 d-block mb-3">🌱</span>
+                <h5 class="fw-bold text-dark">O terreno está vazio</h5>
+                <p class="text-muted">Seja o pioneiro e forje a primeira questão para a comunidade.</p>
+                <button class="btn btn-primary btn-lg rounded-pill fw-bold mt-3" @onclick="IrParaForja">
+                    Ir para a Forja
+                </button>
+            </div>
+        }
+        else
+        {
+            <p class="text-muted fw-bold mb-3 small text-uppercase">Questões Disponíveis (@listaQuestoes.Count)</p>
+
+            @foreach (var questao in listaQuestoes.OrderByDescending(q => q.CriadoEm))
+            {
+                <div class="card-feed" @onclick="() => AbrirQuestao(questao.Id)">
+                    
+                    <div class="d-flex justify-content-between align-items-start">
+                        <span class="tag-tipo @(questao.Tipo == "multipla_escolha" ? "tag-multipla" : "tag-certoerrado")">
+                            @(questao.Tipo == "multipla_escolha" ? "Múltipla Escolha" : "Certo/Errado")
+                        </span>
+                        
+                        <span class="text-muted small fw-bold">
+                            @questao.CriadoEm.ToString("dd/MM")
+                        </span>
+                    </div>
+
+                    <div class="enunciado-preview">
+                        @questao.Enunciado
+                    </div>
+
+                    <div class="rodape-card">
+                        <span class="text-muted small fw-bold">
+                            👤 Comunidade
+                        </span>
+                        <button class="btn-enfrentar">
+                            Resolver ⚔️
+                        </button>
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<Questao> listaQuestoes = new();
+    private bool carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var json = await Http.GetStringAsync("/api/questoes");
+            listaQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(json) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha de comunicação: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private void AbrirQuestao(string id)
+    {
+        NavManager.NavigateTo($"/resolver/{id}");
+    }
+
+    private void IrParaForja()
+    {
+        NavManager.NavigateTo("/nova-questao");
+    }
+}

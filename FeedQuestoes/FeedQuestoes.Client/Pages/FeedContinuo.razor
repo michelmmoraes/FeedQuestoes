@@ -1,0 +1,292 @@
+﻿@page "/feed-continuo"
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>Treino Contínuo | Base Coletiva</PageTitle>
+
+<style>
+    /* O Contêiner Ejetado (Cobre a tela inteira, ignorando o Blazor e o Celular) */
+    .tiktok-container { 
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        height: 100dvh; /* Unidade dinâmica que respeita a barra do navegador mobile */
+        width: 100vw;
+        z-index: 2000; /* Fica por cima de qualquer menu do sistema */
+        background-color: #000;
+        overflow-y: scroll; 
+        scroll-snap-type: y mandatory; 
+        scroll-behavior: smooth;
+        scrollbar-width: none; 
+        -ms-overflow-style: none;
+    }
+    .tiktok-container::-webkit-scrollbar { display: none; }
+
+    .tiktok-tela {
+        height: 100dvh; /* Respeita a altura dinâmica */
+        width: 100%;
+        scroll-snap-align: start; 
+        display: flex;
+        flex-direction: column;
+        background-color: #f7f9fc;
+        position: relative;
+        overflow: hidden; 
+    }
+
+    /* Botão flutuante para escapar da imersão */
+    .btn-fechar-tiktok {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: rgba(0,0,0,0.05);
+        border: none;
+        font-size: 24px;
+        font-weight: bold;
+        color: #4b4b4b;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background 0.2s;
+    }
+    .btn-fechar-tiktok:active { background: rgba(0,0,0,0.15); }
+
+    /* 1. ÁREA SUPERIOR: Enunciado */
+    .area-enunciado-feed { 
+        flex: 0 1 auto; 
+        max-height: 40%; 
+        overflow-y: auto; 
+        padding: 20px; 
+        /* Espaço extra no topo para não encostar na câmera/barra do celular e no botão de fechar */
+        padding-top: 55px; 
+        background: #ffffff; 
+        border-bottom: 2px solid #e5e7eb; 
+        z-index: 2;
+    }
+    
+    /* 2. ÁREA CENTRAL: Alternativas */
+    .area-alternativas-feed { 
+        flex: 1; 
+        overflow-y: auto; 
+        padding: 20px; 
+        padding-bottom: 20px; 
+        background-color: #f7f9fc;
+    }
+
+    /* 3. ÁREA INFERIOR: Barra de Ação Fixa na Base */
+    .area-acao-feed {
+        flex-shrink: 0; 
+        background: #ffffff;
+        padding: 20px; /* Espaçamento base nas laterais e topo */
+        /* Garante 30px de respiro absoluto, mais a margem do sistema se existir */
+        padding-bottom: calc(30px + env(safe-area-inset-bottom)); 
+        border-top: 2px solid #e5e7eb;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.03);
+        z-index: 3;
+    }
+
+    .area-enunciado-feed::-webkit-scrollbar, .area-alternativas-feed::-webkit-scrollbar { width: 4px; }
+    .area-enunciado-feed::-webkit-scrollbar-thumb, .area-alternativas-feed::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 10px; }
+
+    .alt-opcao { border: 2px solid #e5e7eb; border-radius: 20px; padding: 16px; display: flex; align-items: flex-start; gap: 15px; transition: all 0.2s; background: #ffffff; box-shadow: 0 4px 0 #e5e7eb; margin-bottom: 16px; cursor: pointer; }
+    .alt-opcao.selecionada { border-color: #1cb0f6; background-color: #ddf4ff; box-shadow: 0 4px 0 #1899d6; }
+    .alt-opcao.correta-revelada { border-color: #58cc02; background-color: #ddf4c5; box-shadow: 0 4px 0 #58a700; }
+    .alt-opcao.errada-revelada { border-color: #ff4b4b; background-color: #ffdfe0; box-shadow: 0 4px 0 #ea2b2b; opacity: 0.8; }
+    .alt-opcao.desativada { cursor: default; pointer-events: none; }
+    
+    .num-bolinha { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #e5e7eb; display: flex; align-items: center; justify-content: center; background: #f9fafb; font-weight: bold; color: #afafaf; flex-shrink: 0; margin-top: 2px; }
+    .selecionada .num-bolinha { background: #1cb0f6; color: white; border-color: #1cb0f6; }
+    .correta-revelada .num-bolinha { background: #58cc02; color: white; border-color: #58cc02; }
+    .errada-revelada .num-bolinha { background: #ff4b4b; color: white; border-color: #ff4b4b; }
+
+    .texto-alternativa { font-size: 0.95rem; font-weight: 600; color: #4b4b4b; line-height: 1.4; word-break: break-word; }
+
+    .btn-verificar {
+        background-color: #1cb0f6; color: white; box-shadow: 0 4px 0 #1899d6;
+        font-weight: 800; border-radius: 16px; border: none; padding: 14px; text-transform: uppercase; width: 100%; font-size: 1.1rem;
+        transition: all 0.1s;
+    }
+    .btn-verificar:active:not(:disabled) { transform: translateY(4px); box-shadow: 0 0px 0 transparent !important; margin-top: 4px; margin-bottom: -4px; }
+    .btn-verificar:disabled { background-color: #e5e7eb; box-shadow: 0 4px 0 #d1d5db; color: #afafaf; cursor: not-allowed; }
+
+    .aviso-scroll {
+        text-align: center;
+        color: #afafaf;
+        font-weight: bold;
+        font-size: 0.85rem;
+        margin-top: 10px;
+        animation: flutuar 2s infinite ease-in-out;
+    }
+    
+    @@keyframes flutuar {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-4px); }
+    }
+</style>
+
+@if (carregando)
+{
+    <div class="d-flex justify-content-center align-items-center" style="height: 100vh; background: #f7f9fc;">
+        <div class="spinner-border text-primary" role="status"></div>
+    </div>
+}
+else if (!questoesFeed.Any())
+{
+    <div class="d-flex flex-column justify-content-center align-items-center text-center p-4" style="height: 100vh; background: #f7f9fc;">
+        <span class="fs-1 mb-3">🏆</span>
+        <h4 class="fw-bold text-dark">Fim da Linha!</h4>
+        <p class="text-muted">Você já esgotou todas as missões da base coletiva.</p>
+        <button class="btn btn-primary rounded-pill mt-3 px-4" @onclick="SairDoTreino">Voltar ao Mural</button>
+    </div>
+}
+else
+{
+    <div class="tiktok-container">
+        @foreach (var estado in questoesFeed)
+        {
+            <div class="tiktok-tela">
+                
+                <button class="btn-fechar-tiktok" @onclick="SairDoTreino">×</button>
+
+                <div class="area-enunciado-feed">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <span class="badge border border-secondary text-secondary rounded-pill py-1 px-3 fw-bold" style="font-size: 0.75rem;">
+                            @(estado.Questao.Tipo == "certo_errado" ? "Certo/Errado" : "Múltipla Escolha")
+                        </span>
+                        <span class="text-uppercase fw-bold" style="font-size: 0.7rem; color: #afafaf; letter-spacing: 1px;">Texto Base</span>
+                    </div>
+
+                    <p class="fs-6 fw-bold text-dark mb-0" style="white-space: pre-line; line-height: 1.6;">
+                        @estado.Questao.Enunciado
+                    </p>
+                </div>
+
+                <div class="area-alternativas-feed">
+                    <div class="d-flex flex-column">
+                        @foreach (var (alt, i) in estado.Questao.Alternativas.Select((value, index) => (value, index)))
+                        {
+                            var letra = estado.Questao.Tipo == "certo_errado" ? (i == 0 ? "C" : "E") : ((char)('A' + i)).ToString();
+                            var estadoCss = ObterClasseAlternativa(estado, alt.Id);
+
+                            <div class="alt-opcao @estadoCss" @onclick="() => SelecionarAlternativa(estado, alt.Id)">
+                                <div class="num-bolinha">@letra</div>
+                                <div class="texto-alternativa">@alt.Texto</div>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <div class="area-acao-feed">
+                    @if (!estado.Respondida)
+                    {
+                        <button class="btn-verificar" 
+                                disabled="@(string.IsNullOrEmpty(estado.AlternativaSelecionadaId))" 
+                                @onclick="() => ConfirmarResposta(estado)">
+                            Verificar Resposta
+                        </button>
+                    }
+                    else
+                    {
+                        <div class="text-center p-3 rounded-4" style="background-color: @(estado.Acertou ? "#ddf4c5" : "#ffdfe0"); border: 2px solid @(estado.Acertou ? "#58cc02" : "#ff4b4b");">
+                            <h5 class="fw-bold mb-0" style="color: @(estado.Acertou ? "#58a700" : "#ea2b2b");">
+                                @(estado.Acertou ? "Gabaritou! 🎯" : "Revise a teoria! 📚")
+                            </h5>
+                        </div>
+                        <div class="aviso-scroll">
+                            Deslize para cima para a próxima 👆
+                        </div>
+                    }
+                </div>
+
+            </div>
+        }
+    </div>
+}
+
+@code {
+    private class EstadoCardQuestao
+    {
+        public Questao Questao { get; set; } = new();
+        public string? AlternativaSelecionadaId { get; set; }
+        public bool Respondida { get; set; }
+        public bool Acertou { get; set; }
+    }
+
+    private List<EstadoCardQuestao> questoesFeed = new();
+    private bool carregando = true;
+    private readonly string idTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // O rádio (Http) pede as questões para a API do Servidor
+            var jsonBusca = await Http.GetStringAsync("/api/questoes");
+            var questoesDoServidor = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonBusca) ?? new();            var random = new Random();
+            var listaCrua = questoesDoServidor.OrderBy(q => random.Next()).ToList();
+            questoesFeed = listaCrua.Select(q => new EstadoCardQuestao { Questao = q }).ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao carregar o feed: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private void SelecionarAlternativa(EstadoCardQuestao estado, string id)
+    {
+        if (estado.Respondida) return;
+        estado.AlternativaSelecionadaId = id;
+    }
+
+    private string ObterClasseAlternativa(EstadoCardQuestao estado, string altId)
+    {
+        if (!estado.Respondida)
+        {
+            return estado.AlternativaSelecionadaId == altId ? "selecionada" : "";
+        }
+
+        var alt = estado.Questao.Alternativas.First(a => a.Id == altId);
+        if (alt.IsCorreta) return "correta-revelada desativada";
+        if (estado.AlternativaSelecionadaId == altId && !alt.IsCorreta) return "errada-revelada desativada";
+        return "desativada opacity-50";
+    }
+
+    private async Task ConfirmarResposta(EstadoCardQuestao estado)
+    {
+        if (string.IsNullOrEmpty(estado.AlternativaSelecionadaId)) return;
+
+        var altEscolhida = estado.Questao.Alternativas.First(a => a.Id == estado.AlternativaSelecionadaId);
+        
+        estado.Respondida = true;
+        estado.Acertou = altEscolhida.IsCorreta;
+
+        var novaResposta = new Resposta
+        {
+            RespondidoPor = idTrabalhador,
+            QuestaoId = estado.Questao.Id,
+            Correta = altEscolhida.IsCorreta
+        };
+
+        try
+        {
+            // O rádio avisa o servidor que o aluno respondeu
+            var jsonEnvio = Newtonsoft.Json.JsonConvert.SerializeObject(novaResposta);
+            await Http.PostAsync("/api/respostas", new StringContent(jsonEnvio, System.Text.Encoding.UTF8, "application/json"));        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Falha ao registrar métrica: {ex.Message}");
+        }
+    }
+
+    private void SairDoTreino()
+    {
+        NavManager.NavigateTo("/resolver"); // Retorna o usuário para o feed principal seguro
+    }
+}

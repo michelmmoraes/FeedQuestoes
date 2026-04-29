@@ -1,0 +1,266 @@
+﻿@page "/desempenho"
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<PageTitle>Perfil | Base Coletiva</PageTitle>
+
+<style>
+    /* O Decreto de Fronteira: Obriga todos os elementos a calcularem margens para dentro */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    /* Travamento lateral para evitar rolagens invisíveis e tela "solta" */
+    .bg-jogavel { 
+        background-color: #f7f9fc; 
+        min-height: 100vh; 
+        padding-bottom: 90px; 
+        font-family: 'Segoe UI', system-ui, sans-serif; 
+        width: 100%;
+        overflow-x: hidden; 
+    }
+    
+    /* Cabeçalho do Perfil (Estilo Instagram/TikTok) */
+    .header-perfil { background: #fff; padding: 30px 20px 20px; border-bottom: 2px solid #e5e7eb; text-align: center; }
+    .avatar-perfil { width: 80px; height: 80px; background-color: #1cb0f6; color: white; font-size: 32px; font-weight: bold; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 15px; border: 4px solid #ddf4ff; }
+    .nome-perfil { font-size: 1.4rem; font-weight: 900; color: #4b4b4b; margin-bottom: 2px; letter-spacing: -0.5px; }
+    .bio-perfil { font-size: 0.85rem; color: #afafaf; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 15px; }
+    
+    /* Abas de Navegação Interna */
+    .tabs-perfil { display: flex; border-bottom: 2px solid #e5e7eb; background: #fff; position: sticky; top: 0; z-index: 10; width: 100%; }
+    .tab-item { flex: 1; text-align: center; padding: 15px 0; font-weight: 800; color: #afafaf; cursor: pointer; transition: all 0.2s; border-bottom: 3px solid transparent; text-transform: uppercase; font-size: 0.85rem; letter-spacing: 0.5px; }
+    .tab-item.ativa { color: #1cb0f6; border-bottom-color: #1cb0f6; }
+
+    /* Container de Conteúdo: Adiciona a largura de 100% e margens laterais seguras (16px) */
+    .conteudo-aba { padding: 20px 16px; max-width: 600px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+
+    /* Estilos da Aba de Estatísticas */
+    .card-painel { background: #ffffff; border-radius: 24px; border: 2px solid #e5e7eb; box-shadow: 0 8px 0 #e5e7eb; margin-bottom: 24px; padding: 24px; text-align: center; box-sizing: border-box; width: 100%; }
+    .grid-metricas { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 24px; box-sizing: border-box; width: 100%; }
+    .card-metrica { border-radius: 20px; padding: 20px; text-align: center; border: 2px solid; box-shadow: 0 6px 0; box-sizing: border-box; }
+    .metrica-acertos { background-color: #ddf4c5; border-color: #58cc02; color: #58a700; box-shadow-color: #58a700; }
+    .metrica-erros { background-color: #ffdfe0; border-color: #ff4b4b; color: #ea2b2b; box-shadow-color: #ea2b2b; }
+    .valor-metrica { font-size: 2.5rem; font-weight: 900; line-height: 1; margin-bottom: 5px; }
+    .titulo-metrica { font-size: 0.8rem; font-weight: 800; text-transform: uppercase; }
+    .trilho-progresso { background-color: #e5e7eb; border-radius: 100px; height: 24px; width: 100%; overflow: hidden; position: relative; }
+    .preenchimento-progresso { height: 100%; border-radius: 100px; transition: width 1s ease-in-out; }
+
+    /* Estilos da Aba Vitrine (Estilo TikTok Grid) */
+    .grid-vitrine { 
+        display: grid; 
+        grid-template-columns: repeat(2, minmax(0, 1fr)); 
+        gap: 15px; 
+        box-sizing: border-box; 
+        width: 100%;
+    }
+    
+    .card-vitrine { 
+        background: #fff; 
+        border: 2px solid #e5e7eb; 
+        border-radius: 16px; 
+        padding: 15px; 
+        height: 140px; 
+        display: flex; 
+        flex-direction: column; 
+        justify-content: space-between; 
+        position: relative; 
+        box-shadow: 0 4px 0 #e5e7eb; 
+        cursor: pointer; 
+        transition: transform 0.1s; 
+        box-sizing: border-box; 
+        width: 100%;
+    }
+    .card-vitrine:active { transform: translateY(2px); box-shadow: 0 2px 0 #e5e7eb; }
+    .preview-texto { font-size: 0.85rem; font-weight: 700; color: #4b4b4b; display: -webkit-box; -webkit-line-clamp: 4; -webkit-box-orient: vertical; overflow: hidden; line-height: 1.3; }
+    .rodape-vitrine { display: flex; justify-content: space-between; align-items: center; font-size: 0.75rem; font-weight: 800; color: #afafaf; margin-top: 8px; border-top: 2px dashed #f3f4f6; padding-top: 8px; }
+    
+    /* Recuando o alfinete para dentro do campo visual seguro */
+    .tag-fixado { 
+        position: absolute; 
+        top: -6px; 
+        right: -6px; 
+        background: #ffc800; color: #fff; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; border: 2px solid #fff; box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
+    }
+</style>
+
+<div class="bg-jogavel">
+    
+    <div class="header-perfil shadow-sm">
+        <div class="avatar-perfil">✊</div>
+        <div class="nome-perfil">Michel</div>
+        <div class="bio-perfil">Auditor Fiscal em Formação</div>
+    </div>
+
+    <div class="tabs-perfil">
+        <div class="tab-item @(abaAtual == "vitrine" ? "ativa" : "")" @onclick='() => MudarAba("vitrine")'>
+            🛠️ Vitrine (@minhasQuestoes.Count)
+        </div>
+        <div class="tab-item @(abaAtual == "stats" ? "ativa" : "")" @onclick='() => MudarAba("stats")'>
+            📊 Práxis
+        </div>
+    </div>
+
+    <div class="conteudo-aba">
+        
+        @if (carregando)
+        {
+            <div class="text-center text-muted mt-5 fw-bold fs-5">
+                <div class="spinner-border text-primary mb-3" role="status"></div>
+                <p>Mapeando a base...</p>
+            </div>
+        }
+        else if (abaAtual == "vitrine")
+        {
+            @if (!minhasQuestoes.Any())
+            {
+                <div class="text-center py-5">
+                    <span class="fs-1 d-block mb-3">📭</span>
+                    <h5 class="fw-bold text-dark">Nenhuma forja concluída</h5>
+                    <p class="text-muted fw-bold">Você ainda não contribuiu com a base coletiva.</p>
+                </div>
+            }
+            else
+            {
+                <div class="grid-vitrine">
+                    @foreach (var questao in minhasQuestoes)
+                    {
+                        <div class="card-vitrine" @onclick="() => AbrirQuestao(questao.Id)">
+                            @if(minhasQuestoes.IndexOf(questao) == 0)
+                            {
+                                <div class="tag-fixado" title="Fixado">📌</div>
+                            }
+                            
+                            <div class="preview-texto">
+                                @questao.Enunciado
+                            </div>
+                            <div class="rodape-vitrine">
+                                <span>@(questao.Tipo == "certo_errado" ? "C/E" : "Múltipla")</span>
+                                <span>@questao.CriadoEm.ToString("dd/MM")</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else if (abaAtual == "stats")
+        {
+            @if (totalRespostas == 0)
+            {
+                <div class="card-painel">
+                    <span class="fs-1 d-block mb-3">📊</span>
+                    <h5 class="fw-bold text-dark">Nenhum dado gerado</h5>
+                    <p class="text-muted fw-bold mb-0">Resolva missões para construir seu histórico!</p>
+                </div>
+            }
+            else
+            {
+                <div class="card-painel">
+                    <h6 class="fw-bold text-muted text-uppercase mb-1">Eficácia Geral</h6>
+                    <div class="fw-black mb-3" style="font-size: 3.5rem; color: #4b4b4b; font-weight: 900; line-height: 1;">
+                        @taxaAcerto%
+                    </div>
+                    
+                    <div class="trilho-progresso mb-2">
+                        <div class="preenchimento-progresso" style="width: @(taxaAcerto)%; background-color: @ObterCorTaxa(taxaAcerto);"></div>
+                    </div>
+                    <small class="text-muted fw-bold">Foram @totalRespostas batalhas enfrentadas até agora.</small>
+                </div>
+
+                <div class="grid-metricas">
+                    <div class="card-metrica metrica-acertos">
+                        <div class="valor-metrica">@totalAcertos</div>
+                        <div class="titulo-metrica">Acertos ✓</div>
+                    </div>
+                    
+                    <div class="card-metrica metrica-erros">
+                        <div class="valor-metrica">@totalErros</div>
+                        <div class="titulo-metrica">Revisar ×</div>
+                    </div>
+                </div>
+
+                <div class="alert mt-4 fw-bold text-center" style="background-color: #ddf4ff; color: #1cb0f6; border: 2px solid #1cb0f6; border-radius: 16px;">
+                    💡 <strong>Análise:</strong> @GerarMensagemDiagnostico()
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private bool carregando = true;
+    private string abaAtual = "vitrine"; // A aba padrão agora é a vitrine de produção
+    private readonly string idTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
+
+    // Dados de Desempenho
+    private int totalRespostas = 0;
+    private int totalAcertos = 0;
+    private int totalErros = 0;
+    private int taxaAcerto = 0;
+
+    // Dados da Vitrine
+    private List<Questao> minhasQuestoes = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CarregarDadosDoPerfil();
+    }
+
+    private void MudarAba(string novaAba)
+    {
+        abaAtual = novaAba;
+    }
+
+    private async Task CarregarDadosDoPerfil()
+    {
+        try
+        {
+            // 1. Busca as Métricas do Camarada
+            var jsonRespostas = await Http.GetStringAsync($"/api/respostas/{idTrabalhador}");
+            var historico = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Resposta>>(jsonRespostas) ?? new();
+            
+            totalRespostas = historico.Count;
+            if (totalRespostas > 0)
+            {
+                totalAcertos = historico.Count(r => r.Correta);
+                totalErros = totalRespostas - totalAcertos;
+                taxaAcerto = (int)Math.Round((double)totalAcertos / totalRespostas * 100);
+            }
+
+            // 2. Busca a Produção Forjada para a Vitrine
+            var jsonQuestoes = await Http.GetStringAsync("/api/questoes");
+            var todasQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonQuestoes) ?? new();
+            
+            minhasQuestoes = todasQuestoes
+                .Where(q => q.CriadorId == idTrabalhador)
+                .OrderByDescending(q => q.CriadoEm)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro ao carregar o perfil: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    private void AbrirQuestao(string questaoId)
+    {
+        // Envia para o Feed Perfil passando quem é o criador e qual foi a questão clicada
+        NavManager.NavigateTo($"/feed-perfil/{idTrabalhador}/{questaoId}");
+    }
+
+    private string ObterCorTaxa(int taxa)
+    {
+        if (taxa >= 80) return "#58cc02";
+        if (taxa >= 50) return "#ffc800";
+        return "#ff4b4b";
+    }
+
+    private string GerarMensagemDiagnostico()
+    {
+        if (taxaAcerto >= 85) return "Desempenho de elite. A vaga no serviço público está se materializando!";
+        if (taxaAcerto >= 60) return "Você está na média. Reforce a revisão dos pontos fracos.";
+        return "O sistema está tentando te derrubar. Volte à teoria e continue a luta!";
+    }
+}

@@ -1,0 +1,119 @@
+﻿@page "/"
+@inject NavigationManager NavManager
+
+<PageTitle>Base Coletiva | Início</PageTitle>
+
+<style>
+    .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 40px; font-family: 'Segoe UI', system-ui, sans-serif; }
+    
+    .topo-home { background: #fff; padding: 30px 20px; border-bottom: 2px solid #e5e7eb; text-align: center; margin-bottom: 24px; }
+    
+    .grid-atalhos { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 0 20px; max-width: 500px; margin: 0 auto; }
+
+    .card-atalho { 
+        background: #ffffff; 
+        border-radius: 20px; 
+        border: 2px solid #e5e7eb; 
+        box-shadow: 0 8px 0 #e5e7eb; 
+        padding: 20px; 
+        display: flex; 
+        align-items: center; 
+        gap: 20px; 
+        cursor: pointer; 
+        transition: transform 0.1s, box-shadow 0.1s;
+        text-align: left;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .card-atalho:active { transform: translateY(4px); box-shadow: 0 4px 0 #e5e7eb; }
+
+    .icone-circulo { 
+        width: 60px; 
+        height: 60px; 
+        border-radius: 18px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 28px; 
+        flex-shrink: 0;
+        border: 2px solid rgba(0,0,0,0.1);
+    }
+
+    .info-atalho h6 { margin: 0; font-weight: 800; font-size: 1.1rem; color: #4b4b4b; }
+    .info-atalho p { margin: 0; font-size: 0.85rem; color: #777; font-weight: 600; }
+
+    /* Cores Temáticas */
+    .bg-treino { background-color: #1cb0f6; color: white; }
+    .bg-mural { background-color: #ffc800; color: white; }
+    .bg-forja { background-color: #58cc02; color: white; }
+    .bg-stats { background-color: #ce82ff; color: white; }
+
+    .frase-dia { 
+        margin-top: 40px; 
+        padding: 20px; 
+        text-align: center; 
+        color: #afafaf; 
+        font-style: italic; 
+        font-size: 0.9rem;
+        line-height: 1.4;
+    }
+</style>
+
+<div class="bg-jogavel">
+    
+    <div class="topo-home shadow-sm">
+        <h2 class="fw-black mb-1" style="color: #1cb0f6; font-weight: 900; letter-spacing: -1px;">🚩 Base Coletiva</h2>
+        <p class="text-muted fw-bold mb-0">Socializando o conhecimento para a vitória.</p>
+    </div>
+
+    <div class="grid-atalhos">
+        
+        @* Treino Contínuo - O Carro Chefe *@
+        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/feed-continuo")'>
+            <div class="icone-circulo bg-treino">🔥</div>
+            <div class="info-atalho">
+                <h6>Treino Contínuo</h6>
+                <p>Missões rápidas em fluxo infinito.</p>
+            </div>
+        </div>
+
+        @* Mural de Questões *@
+        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/resolver")'>
+            <div class="icone-circulo bg-mural">🌍</div>
+            <div class="info-atalho">
+                <h6>Mural Coletivo</h6>
+                <p>Escolha sua batalha na base de dados.</p>
+            </div>
+        </div>
+
+        @* Criar Questão *@
+        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/nova-questao")'>
+            <div class="icone-circulo bg-forja">🛠️</div>
+            <div class="info-atalho">
+                <h6>Criar Questão</h6>
+                <p>Contribua com a base do povo.</p>
+            </div>
+        </div>
+
+        @* Estatísticas *@
+        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/desempenho")'>
+            <div class="icone-circulo bg-stats">📈</div>
+            <div class="info-atalho">
+                <h6>Estatísticas da Práxis</h6>
+                <p>Acompanhe seu avanço e eficácia.</p>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="frase-dia px-4">
+        "O trabalhador que estuda é o arquiteto da própria libertação."
+    </div>
+
+</div>
+
+@code {
+    // Aqui podemos futuramente carregar um resumo rápido de XP 
+    // ou saudações personalizadas para o camarada.
+}

@@ -1,0 +1,516 @@
+﻿@page "/nova-questao"
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
+
+<PageTitle>Forja | Base Coletiva</PageTitle>
+
+<style>
+    *, *::before, *::after { box-sizing: border-box; }
+
+    .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 100px; font-family: 'Segoe UI', system-ui, sans-serif; }
+    
+    /* Topo Ultra-Compacto - Força Bruta */
+    .topo-app { 
+        background: #fff; 
+        border-bottom: 2px solid #e5e7eb; 
+        position: sticky; 
+        top: 0; 
+        z-index: 10; 
+        display: flex; 
+        align-items: center; 
+        height: 32px; 
+        padding: 0 16px; 
+        margin-bottom: 12px;
+        overflow: hidden;
+    }
+
+    /* Seletor Horizontal Enxuto */
+    .seletor-tipo { background: #e5e7eb; border-radius: 16px; padding: 4px; display: flex; gap: 4px; margin-bottom: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+    .opcao-tipo { flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px; font-weight: 800; color: #afafaf; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
+    .opcao-tipo .icone { font-size: 1.1rem; }
+    .opcao-tipo.ativa { background: #fff; color: #1cb0f6; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
+
+    /* Títulos e Resumos maiores */
+    .silo-titulo { font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #afafaf; margin: 0; }
+    .silo-resumo { font-size: 0.9rem; color: #777; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%; margin-left: 8px; }
+    
+    /* Inputs com fonte expandida para leitura clara */
+    .input-jogavel { border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; font-weight: 600; padding: 12px 14px; color: #3c3c3c; width: 100%; transition: all 0.2s; resize: vertical; font-size: 1.05rem; line-height: 1.3; }
+    .input-jogavel::placeholder { color: #afafaf; font-weight: 500; font-size: 1rem; }
+    
+    /* Botões mais imponentes e fáceis de tocar */
+    .btn-jogavel { font-weight: 800; border-radius: 14px; border: 2px solid transparent; padding: 14px 16px; text-transform: uppercase; transition: all 0.1s; letter-spacing: 0.5px; cursor: pointer; text-align: center; user-select: none; font-size: 0.95rem; }
+    
+    /* Tabuleiro com fonte legível */
+    .item-tabuleiro span.flex-grow-1 { font-size: 1rem !important; }
+
+    /* Silos de Produção (Acordeões) */
+    .silo-etapa { border: 2px solid #e5e7eb; border-radius: 16px; margin-bottom: 8px; overflow: hidden; background: #fff; transition: all 0.3s ease; }
+    .silo-etapa.ativa { 
+        border-color: #1cb0f6; 
+        box-shadow: 0 4px 12px rgba(28, 176, 246, 0.15); 
+        overflow: visible; 
+        position: relative;
+        z-index: 10; 
+    }
+    .silo-etapa.concluida { border-color: #d1d5db; background: #f9fafb; }
+
+    /* Cabeçalho do Silo */
+    .silo-header { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
+    .ativa .silo-titulo { color: #1cb0f6; }
+    .concluida .silo-titulo { color: #58cc02; }
+
+    /* Conteúdo Interno do Silo */
+    .silo-conteudo { padding: 0 12px 12px 12px; animation: animaEntrada 0.3s ease-out; }
+    @@keyframes animaEntrada { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+
+    /* Estilo do Tabuleiro */
+    .item-tabuleiro { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid #e5e7eb; padding: 8px; border-radius: 12px; margin-bottom: 6px; }
+    .item-tabuleiro.gabarito { border-color: #58cc02; background: #f3fce9; }
+    .btn-ordem { background: #e5e7eb; color: #4b4b4b; border: none; border-radius: 8px; width: 34px; height: 34px; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+    .btn-ordem:active { background: #d1d5db; transform: scale(0.95); }
+
+    /* Elementos Comuns e Botões */
+    .input-jogavel:focus { border-color: #1cb0f6; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(28,176,246,0.1); }
+    
+    .btn-jogavel:active:not([disabled]) { transform: translateY(4px); box-shadow: 0 0px 0 transparent !important; margin-bottom: -4px; }
+    .btn-secundario { background-color: #1cb0f6; color: white; box-shadow: 0 4px 0 #1899d6; }
+    .btn-neutro { background-color: #ffffff; color: #4b4b4b; border-color: #e5e7eb; box-shadow: 0 4px 0 #e5e7eb; }
+
+    /* Metadados e Dropdowns */
+    .select-custom-container { position: relative; width: 100%; margin-bottom: 12px; }
+    .select-custom-header { border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; padding: 8px 12px; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 44px; transition: all 0.2s; }
+    .select-custom-header.aberto { border-color: #1cb0f6; background: #fff; box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1); }
+    .tag-disciplina { background: #1cb0f6; color: white; padding: 4px 10px; border-radius: 10px; font-size: 0.75rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+    .btn-fechar-tag { background: rgba(0,0,0,0.15); border-radius: 50%; width: 16px; height: 16px; display: flex; align-items: center; justify-content: center; font-size: 10px; transition: background 0.2s; }
+    .select-custom-dropdown { position: absolute; top: 100%; left: 0; right: 0; margin-top: 4px; background: #fff; border: 2px solid #e5e7eb; border-radius: 12px; box-shadow: 0 8px 16px rgba(0,0,0,0.1); z-index: 101; overflow: hidden; display: flex; flex-direction: column; }
+    .select-custom-search { padding: 8px; border-bottom: 2px solid #e5e7eb; background: #f7f9fc; }
+    .select-custom-search input { width: 100%; border: 2px solid #e5e7eb; border-radius: 8px; padding: 8px; font-weight: 600; font-size: 0.9rem; outline: none; }
+    .select-custom-list { max-height: 280px; overflow-y: auto; padding: 4px; }
+    .select-custom-item { padding: 8px 12px; border-radius: 8px; display: flex; align-items: center; gap: 8px; cursor: pointer; font-weight: 700; color: #4b4b4b; font-size: 0.9rem; }
+    .select-custom-item.selecionado { background: #ddf4ff; color: #1cb0f6; }
+    .overlay-fechar { position: fixed; top: 0; left: 0; right: 0; bottom: 0; z-index: 100; }
+</style>
+
+<div class="bg-jogavel p-2">
+    
+    <div class="topo-app">
+        <h6 class="fw-bold m-0 p-0 text-dark text-center w-100" style="letter-spacing: -0.5px; line-height: 32px; font-size: 0.85rem;">
+            🛠️ Forjar Missão
+        </h6>
+    </div>
+
+    <div class="container-fluid p-0" style="max-width: 600px; margin: 0 auto;">
+        
+        <div class="seletor-tipo mt-2 mb-3">
+            <div class="opcao-tipo @(novaQuestao.Tipo == "multipla_escolha" ? "ativa" : "")" @onclick="SetMultiplaEscolha">
+                <span class="icone">🅰️</span> <span class="text-truncate">Múltipla Escolha</span>
+            </div>
+            <div class="opcao-tipo @(novaQuestao.Tipo == "certo_errado" ? "ativa" : "")" @onclick="SetCertoErrado">
+                <span class="icone">⚖️</span> <span class="text-truncate">Certo/Errado</span>
+            </div>
+        </div>
+
+        @if (!string.IsNullOrEmpty(mensagem))
+        {
+            <div class="silo-etapa mb-3" style="border-color: @(classeMensagem == "sucesso" ? "#58cc02" : "#ff4b4b"); background: @(classeMensagem == "sucesso" ? "#f3fce9" : "#ffdfe0");">
+                <div class="p-3 d-flex align-items-center gap-2">
+                    <span class="fs-4">@(classeMensagem == "sucesso" ? "🌟" : "⚠️")</span>
+                    <span class="fw-bold m-0 text-dark" style="font-size: 0.9rem;">@mensagem</span>
+                </div>
+            </div>
+        }
+
+        <div class="silo-etapa @(etapaAtiva == 0 ? "ativa" : "concluida")">
+            <div class="silo-header" @onclick="() => AbrirEtapa(0)">
+                <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                    <h6 class="silo-titulo">1. O Comando</h6>
+                    <span class="silo-resumo">@GetResumo(novaQuestao.Enunciado, "Aguardando...")</span>
+                </div>
+                <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 0 ? "▴" : "▾")</span>
+            </div>
+            @if (etapaAtiva == 0)
+            {
+                <div class="silo-conteudo">
+                    <textarea class="input-jogavel mb-2" rows="4" @bind="novaQuestao.Enunciado" placeholder="Descreva a missão ou a teoria base..."></textarea>
+                    <button class="btn-jogavel btn-secundario w-100" @onclick="ProximaEtapa">Confirmar Comando ➔</button>
+                </div>
+            }
+        </div>
+
+        @if (novaQuestao.Enunciado?.Length > 0 || etapaAtiva >= 1)
+        {
+            <div class="silo-etapa @(etapaAtiva == 1 ? "ativa" : (etapaAtiva > 1 ? "concluida" : ""))">
+                <div class="silo-header" @onclick="() => AbrirEtapa(1)">
+                    <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                        <h6 class="silo-titulo">2. A Verdade</h6>
+                        <span class="silo-resumo">@GetResumo(novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto, "Defina a opção correta...")</span>
+                    </div>
+                    <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 1 ? "▴" : "▾")</span>
+                </div>
+                @if (etapaAtiva == 1)
+                {
+                    <div class="silo-conteudo">
+                    @if (novaQuestao.Tipo == "multipla_escolha")
+                    {
+                        <textarea class="input-jogavel mb-2" style="border-color: #58cc02; background: #f3fce9;" rows="2" @bind="distratorTemporario" placeholder="Digite a resposta certa..."></textarea>
+                        <button class="btn-jogavel w-100 text-white" style="background: #58cc02; box-shadow: 0 4px 0 #58a700;" @onclick="AdicionarGabarito">Selar Verdade ✓</button>
+                    }
+                    else
+                    {
+                        <div class="d-flex gap-2 mb-2">
+                            <button class="btn-jogavel w-50 @(distratorTemporario == "Certo" ? "btn-secundario" : "btn-neutro")" @onclick="SetCerto">👍 CERTO</button>
+                            <button class="btn-jogavel w-50 @(distratorTemporario == "Errado" ? "btn-secundario" : "btn-neutro")" @onclick="SetErrado">👎 ERRADO</button>
+                        </div>
+                        <button class="btn-jogavel w-100 text-white" style="background: #58cc02; box-shadow: 0 4px 0 #58a700;" @onclick="ConfirmarGabaritoCE">Selar Verdade ✓</button>
+                    }
+                </div>
+                }
+            </div>
+        }
+
+        @if (novaQuestao.Tipo == "multipla_escolha")
+        {
+            @if (novaQuestao.Alternativas.Any(a => a.IsCorreta) || etapaAtiva >= 2)
+            {
+                var distratores = novaQuestao.Alternativas.Where(a => !a.IsCorreta).ToList();
+                var qtdErros = distratores.Count;
+                <div class="silo-etapa @(etapaAtiva == 2 ? "ativa" : (etapaAtiva > 2 ? "concluida" : ""))">
+                    <div class="silo-header" @onclick="() => AbrirEtapa(2)">
+                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                            <h6 class="silo-titulo">3. Os Desvios (@qtdErros/4)</h6>
+                            @if (qtdErros == 4)
+                            {
+                                <span class="silo-resumo" style="color: #58cc02;">Arsenal completo!</span>                      
+                            }
+                        </div>
+                        <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 2 ? "▴" : "▾")</span>
+                    </div>
+                    @if (etapaAtiva == 2)
+                    {
+                        <div class="silo-conteudo">
+
+                            @if (qtdErros > 0)
+                            {
+                                <div class="d-flex justify-content-between align-items-center mb-3 mt-1 px-1">
+                                    <span class="text-muted fw-bold" style="font-size: 0.85rem;">@qtdErros peça(s) no estoque.</span>
+                                    <span class="fw-bold" style="font-size: 0.85rem; color: #1cb0f6; cursor: pointer;" @onclick="AlternarGavetaDesvios">
+                                        @(gavetaDesviosAberta ? "Ocultar Revisão ▲" : "Revisar Peças ▼")
+                                    </span>
+                                </div>
+
+                                @if (gavetaDesviosAberta)
+                                {
+                                    <div class="mb-3 p-2" style="background: #f0f2f5; border-radius: 12px; border: 1px dashed #d1d5db;">
+                                        @foreach (var alt in distratores)
+                                        {
+                                            <div class="d-flex align-items-center mb-2 p-1" style="background: #fff; border: 1px solid #e5e7eb; border-radius: 12px;">
+                                                <span class="ms-2 fw-bold text-danger">❌</span>
+                                                <textarea class="input-jogavel m-0" style="min-height: 38px; border: none; background: transparent; box-shadow: none; padding: 8px;" rows="1" @bind="alt.Texto" @bind:event="oninput"></textarea>
+                                                <button class="btn p-2 text-muted fw-bold" @onclick="() => novaQuestao.Alternativas.Remove(alt)">🗑️</button>
+                                            </div>
+                                        }
+                                    </div>
+                                }
+                            }
+
+                            @if (qtdErros < 4)
+                            {
+                                <textarea class="input-jogavel mb-2" rows="2" @bind="distratorTemporario" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Digite um erro plausível..."></textarea>
+                                <button class="btn-jogavel btn-neutro w-100" @onclick="AdicionarDistrator">Forjar Erro +</button>
+                            }
+                            else
+                            {
+                                <button class="btn-jogavel btn-secundario w-100 mt-2" @onclick="ProximaEtapa">Avançar para o Tabuleiro ➔</button>
+                            }
+                        </div>
+                    }
+                </div>
+            }
+
+            @if (novaQuestao.Alternativas.Count == 5 || etapaAtiva >= 3)
+            {
+                <div class="silo-etapa @(etapaAtiva == 3 ? "ativa" : (etapaAtiva > 3 ? "concluida" : ""))">
+                    <div class="silo-header" @onclick="() => AbrirEtapa(3)">
+                        <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                            <h6 class="silo-titulo">4. Tabuleiro</h6>
+                            <span class="silo-resumo">@(etapaAtiva > 3 ? "Ordem definida" : "Embaralhe as peças...")</span>
+                        </div>
+                        <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 3 ? "▴" : "▾")</span>
+                    </div>
+                    @if (etapaAtiva == 3)
+                    {
+                        <div class="silo-conteudo">
+                            <p class="text-muted small fw-bold text-center mb-3">Suba ou desça as peças para definir a ordem final:</p>
+                            @for (int i = 0; i < novaQuestao.Alternativas.Count; i++)
+                            {
+                                var idx = i;
+                                var alt = novaQuestao.Alternativas[idx];
+                                <div class="item-tabuleiro @(alt.IsCorreta ? "gabarito" : "")">
+                                    <span class="fw-bold" style="color: #afafaf; width: 20px;">@((char)('A' + i))</span>
+                                    <span class="flex-grow-1" style="font-size: 0.85rem; font-weight: 600; line-height: 1.2;">@alt.Texto</span>
+                                    <div class="d-flex flex-column gap-1">
+                                        <button class="btn-ordem" style="height: 24px;" @onclick="() => Mover(idx, -1)">▲</button>
+                                        <button class="btn-ordem" style="height: 24px;" @onclick="() => Mover(idx, 1)">▼</button>
+                                    </div>
+                                </div>
+                            }
+                            <button class="btn-jogavel btn-secundario w-100 mt-3" @onclick="ProximaEtapa">Tudo em Ordem! ➔</button>
+                        </div>
+                    }
+                </div>
+            }
+        }
+
+        @if (etapaAtiva >= 4)
+        {
+            <div class="silo-etapa @(etapaAtiva == 4 ? "ativa" : "")">
+                <div class="silo-header" @onclick="() => AbrirEtapa(4)">
+                    <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
+                        <h6 class="silo-titulo">5. Acabamento (Tags)</h6>
+                        <span class="silo-resumo">@GetResumo(string.Join(", ", novaQuestao.Disciplinas), "Classifique...")</span>
+                    </div>
+                    <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 4 ? "▴" : "▾")</span>
+                </div>
+                @if (etapaAtiva == 4)
+                {
+                    <div class="silo-conteudo">
+                        
+                        <label class="form-label fw-bold m-0 mb-1" style="color: #4b4b4b; font-size: 0.85rem;">Disciplinas Abrangidas</label>
+                        <div class="select-custom-container m-0 mb-3">
+                            @if (dropdownDisciplinasAberto) { <div class="overlay-fechar" @onclick="FecharDropdownDisciplinas"></div> }
+                            <div class="select-custom-header @(dropdownDisciplinasAberto ? "aberto" : "")" @onclick="AlternarDropdownDisciplinas">
+                                @if (!novaQuestao.Disciplinas.Any()) { <span class="text-muted fw-bold ms-1" style="font-size: 0.85rem;">Toque para selecionar...</span> }
+                                else
+                                {
+                                    @foreach (var disc in novaQuestao.Disciplinas)
+                                    {
+                                        <div class="tag-disciplina" @onclick:stopPropagation="true">
+                                            @disc <div class="btn-fechar-tag" @onclick="() => RemoverDisciplina(disc)">×</div>
+                                        </div>
+                                    }
+                                }
+                            </div>
+                            @if (dropdownDisciplinasAberto)
+                            {
+                                <div class="select-custom-dropdown">
+                                    <div class="select-custom-search">
+                                        <input type="text" placeholder="🔍 Buscar disciplina..." @bind="termoBuscaDisciplina" @bind:event="oninput" />
+                                    </div>
+                                    <div class="select-custom-list">
+                                        @foreach (var disc in DisciplinasFiltradas)
+                                        {
+                                            bool isSelecionado = novaQuestao.Disciplinas.Contains(disc);
+                                            <div class="select-custom-item @(isSelecionado ? "selecionado" : "")" @onclick="() => ToggleDisciplinaNaLista(disc)">
+                                                <input type="checkbox" class="me-2" checked="@isSelecionado" style="pointer-events: none;">
+                                                @disc
+                                            </div>
+                                        }
+                                    </div>
+                                </div>
+                            }
+                        </div>
+
+                        <label class="form-label fw-bold m-0 mb-1" style="color: #4b4b4b; font-size: 0.85rem;">Tags (Assuntos)</label>
+                        <input type="text" class="input-jogavel m-0 mb-4" style="padding: 10px 12px; font-size: 0.9rem;" @bind="assuntosTextoFormulario" placeholder="Ex: kanban, scrum, estimativas...">
+
+                        <button class="btn-jogavel btn-secundario w-100 fs-6 py-3" style="box-shadow: 0 6px 0 #1899d6;" @onclick="SalvarQuestao">
+                            🚀 PUBLICAR MISSÃO NO COLETIVO
+                        </button>
+                    </div>
+                }
+            </div>
+        }
+
+    </div>
+</div>
+
+@code {
+    private Questao novaQuestao = new() { Alternativas = new(), Tipo = "multipla_escolha" };
+    private int etapaAtiva = 0; // 0: Enunciado, 1: Gabarito, 2: Distratores, 3: Tabuleiro, 4: Metadados
+    private string distratorTemporario = "";
+    private bool gavetaDesviosAberta = false;
+    private void AlternarGavetaDesvios() => gavetaDesviosAberta = !gavetaDesviosAberta;
+    private string? mensagem;
+    private string classeMensagem = "info";
+    private readonly string idCriadorTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
+    // Referências para os inputs
+    private ElementReference refEnunciado;
+    private ElementReference refGabarito;
+    private ElementReference refNovoDistrator;
+
+    // Metadados
+    private bool dropdownDisciplinasAberto = false;
+    private string termoBuscaDisciplina = "";
+    private string assuntosTextoFormulario = "";
+    private List<string> disciplinasBase = new() { "Direito Tributário", "Direito Constitucional", "Direito Administrativo", "Auditoria", "Contabilidade", "TI - Engenharia de Software", "TI - Banco de Dados", "TI - Redes e Segurança", "Língua Portuguesa", "Raciocínio Lógico" };
+
+    private IEnumerable<string> DisciplinasFiltradas => string.IsNullOrWhiteSpace(termoBuscaDisciplina) ? disciplinasBase : disciplinasBase.Where(d => d.Contains(termoBuscaDisciplina, StringComparison.OrdinalIgnoreCase));
+
+    private string GetResumo(string? texto, string padrao) => 
+        string.IsNullOrWhiteSpace(texto) ? padrao : (texto.Length > 25 ? texto.Substring(0, 25) + "..." : texto);
+
+    // MÉTODOS DE AÇÃO BLINDADOS
+    private void SetMultiplaEscolha() => MudarTipo("multipla_escolha");
+    private void SetCertoErrado() => MudarTipo("certo_errado");
+    private void SetCerto() => distratorTemporario = "Certo";
+    private void SetErrado() => distratorTemporario = "Errado";
+
+    // 1. Avanço Inteligente
+    private async Task ProximaEtapa() 
+    { 
+        if (novaQuestao.Alternativas.Count == 5 && etapaAtiva < 3) 
+        {
+            etapaAtiva = 3; 
+        } 
+        else 
+        {
+            etapaAtiva++; 
+            // Aguarda um ciclo de renderização para o novo campo aparecer e receber o foco
+            await Task.Delay(100); 
+            await AplicarFocoAutomatico();
+        }
+    }
+
+    private async Task AplicarFocoAutomatico()
+    {
+        try {
+            if (etapaAtiva == 0) await refEnunciado.FocusAsync();
+            else if (etapaAtiva == 1) await refGabarito.FocusAsync();
+            else if (etapaAtiva == 2) await refNovoDistrator.FocusAsync();
+        } catch { /* Proteção contra silos ainda ocultos */ }
+    }
+
+    // Atualize também o AdicionarDistrator para manter o foco no campo vazio
+    private async Task AdicionarDistrator() {
+        if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = false });
+        distratorTemporario = "";
+        
+        if (novaQuestao.Alternativas.Count(a => !a.IsCorreta) >= 4) {
+            await ProximaEtapa();
+        } else {
+            // Mantém o trabalhador no mesmo campo para o próximo erro
+            await refNovoDistrator.FocusAsync();
+        }
+    }
+
+    // 2. O Acordeão Verdadeiro (Poder de recolher)
+    private void AbrirEtapa(int etapa) 
+    { 
+        if (etapaAtiva == etapa) 
+        {
+            etapaAtiva = -1;
+            distratorTemporario = ""; 
+            return;
+        }
+
+        etapaAtiva = etapa; 
+        
+        if (etapa == 1) 
+            distratorTemporario = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto ?? "";
+        else if (etapa == 2) 
+            distratorTemporario = "";
+    }
+
+    // 3. Garanta que o AdicionarGabarito usa a inteligência acima
+    private void AdicionarGabarito() 
+    {
+        if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
+        
+        var gabaritoExistente = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta);
+        if (gabaritoExistente != null) {
+            gabaritoExistente.Texto = distratorTemporario.Trim();
+        } else {
+            novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = true });
+        }
+        
+        distratorTemporario = "";
+        ProximaEtapa(); 
+    }
+
+    private void HandleKeyUp(KeyboardEventArgs e) {
+        if (e.Key == "Enter" || e.Key == "NumpadEnter") {
+            distratorTemporario = distratorTemporario.Replace("\n", "").Replace("\r", "");
+            AdicionarDistrator();
+        }
+    }
+    
+
+    private void Mover(int index, int direcao) {
+        int novoIndex = index + direcao;
+        if (novoIndex < 0 || novoIndex >= novaQuestao.Alternativas.Count) return;
+        var item = novaQuestao.Alternativas[index];
+        novaQuestao.Alternativas.RemoveAt(index);
+        novaQuestao.Alternativas.Insert(novoIndex, item);
+    }
+
+    // Lógica Dropdown Disciplinas
+    private void AlternarDropdownDisciplinas() { dropdownDisciplinasAberto = !dropdownDisciplinasAberto; if (!dropdownDisciplinasAberto) termoBuscaDisciplina = ""; }
+    private void FecharDropdownDisciplinas() { dropdownDisciplinasAberto = false; termoBuscaDisciplina = ""; }
+    private void ToggleDisciplinaNaLista(string disc) { if (novaQuestao.Disciplinas.Contains(disc)) novaQuestao.Disciplinas.Remove(disc); else novaQuestao.Disciplinas.Add(disc); }
+    private void RemoverDisciplina(string disc) { if (novaQuestao.Disciplinas.Contains(disc)) novaQuestao.Disciplinas.Remove(disc); }
+
+    private async Task SalvarQuestao()
+    {
+        if (string.IsNullOrWhiteSpace(novaQuestao.Enunciado)) { MostrarMensagem("A missão precisa de um enunciado.", "erro"); return; }
+        if (novaQuestao.Tipo == "multipla_escolha" && novaQuestao.Alternativas.Count != 5) { MostrarMensagem("O tabuleiro precisa de 5 peças exatas.", "erro"); return; }
+        if (novaQuestao.Tipo == "certo_errado" && novaQuestao.Alternativas.Count != 2) { MostrarMensagem("A missão CE precisa de um gabarito.", "erro"); return; }        
+        if (!novaQuestao.Alternativas.Any(a => a.IsCorreta)) { MostrarMensagem("A missão não possui uma verdade (gabarito).", "erro"); return; }
+
+        if (!string.IsNullOrWhiteSpace(assuntosTextoFormulario))
+        {
+            novaQuestao.Assuntos = assuntosTextoFormulario.Split(',').Select(a => a.Trim()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
+        }
+
+        novaQuestao.CriadorId = idCriadorTrabalhador;
+
+        try
+        {
+            var json = Newtonsoft.Json.JsonConvert.SerializeObject(novaQuestao);
+            var response = await Http.PostAsync("/api/questoes", new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
+            
+            if (response.IsSuccessStatusCode) {
+                MostrarMensagem("Vitória! Missão forjada e enviada à base.", "sucesso");
+                ResetarForja();
+            } else {
+                MostrarMensagem("A burocracia do servidor falhou. Tente novamente.", "erro");
+            }
+        }
+        catch (Exception ex)
+        {
+            MostrarMensagem($"Falha estrutural: {ex.Message}", "erro");
+        }
+    }
+
+    private void MostrarMensagem(string msg, string tipo) { mensagem = msg; classeMensagem = tipo; }
+
+    private void ResetarForja() {
+        novaQuestao = new() { Alternativas = new(), Tipo = "multipla_escolha" };
+        assuntosTextoFormulario = "";
+        distratorTemporario = "";
+        etapaAtiva = 0; 
+        gavetaDesviosAberta = false;
+    }
+
+    private void MudarTipo(string tipo) 
+    {
+        if (novaQuestao.Tipo == tipo) return;
+        novaQuestao.Tipo = tipo;
+        novaQuestao.Alternativas.Clear();
+        distratorTemporario = "";
+        etapaAtiva = 0; 
+        gavetaDesviosAberta = false;
+    }
+
+    private void ConfirmarGabaritoCE() 
+    {
+        if (string.IsNullOrEmpty(distratorTemporario)) return;
+        
+        novaQuestao.Alternativas.Clear();
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Certo", IsCorreta = distratorTemporario == "Certo" });
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Errado", IsCorreta = distratorTemporario == "Errado" });
+        
+        etapaAtiva = 4; // O Salto Quântico! Pula os desvios e vai direto pras Tags.
+    }
+}

@@ -1,0 +1,4 @@
+<Solution>
+  <Project Path="FeedQuestoes/FeedQuestoes.Client/FeedQuestoes.Client.csproj" />
+  <Project Path="FeedQuestoes/FeedQuestoes/FeedQuestoes.csproj" />
+</Solution>
