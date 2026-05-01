@@ -1,4 +1,4 @@
-﻿@page "/resolver"
+﻿@page "/feed"
 @using FeedQuestoes.Client.Modelos
 @inject HttpClient Http
 @inject NavigationManager NavManager
@@ -114,7 +114,7 @@
         }
     }
 
-    private void AbrirQuestao(string id)
+    private void AbrirQuestao(Guid id)
     {
         NavManager.NavigateTo($"/resolver/{id}");
     }

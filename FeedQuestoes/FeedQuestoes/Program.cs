@@ -69,7 +69,7 @@ app.MapPost("/api/respostas", async (HttpContext ctx, Supabase.Client db) => {
     return Results.Ok();
 });
 
-app.MapGet("/api/respostas/{idTrabalhador}", async (Supabase.Client db, string idTrabalhador) => {
+app.MapGet("/api/respostas/{idTrabalhador}", async (Supabase.Client db, Guid idTrabalhador) => {
     var response = await db.From<Resposta>().Where(r => r.RespondidoPor == idTrabalhador).Get();
     return Results.Text(Newtonsoft.Json.JsonConvert.SerializeObject(response.Models), "application/json");
 });
@@ -89,4 +89,26 @@ app.MapGet("/service-worker.js", (IWebHostEnvironment env) =>
 
     return Results.NotFound("Arquivo do motor não encontrado.");
 });
+
+app.MapGet("/api/territorios/{id:guid}", async (Supabase.Client db, Guid id) => {
+    // Busca na base de dados o território específico
+    var response = await db.From<Assunto>().Where(t => t.Id == id).Single();
+
+    if (response == null) return Results.NotFound();
+
+    return Results.Text(Newtonsoft.Json.JsonConvert.SerializeObject(response), "application/json");
+});
+
+app.MapGet("/api/territorios", async (Supabase.Client db) => {
+    // Busca todos os registros da tabela 'assunto'
+    var response = await db.From<Assunto>().Get();
+    return Results.Text(Newtonsoft.Json.JsonConvert.SerializeObject(response.Models), "application/json");
+});
+
+// Rota para buscar as relações de hierarquia
+app.MapGet("/api/territorios/hierarquia", async (Supabase.Client db) => {
+    var response = await db.From<AssuntoHierarquia>().Get();
+    return Results.Text(Newtonsoft.Json.JsonConvert.SerializeObject(response.Models), "application/json");
+});
+
 app.Run();

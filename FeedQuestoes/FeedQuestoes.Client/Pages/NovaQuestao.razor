@@ -9,75 +9,33 @@
 
     .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 100px; font-family: 'Segoe UI', system-ui, sans-serif; }
     
-    /* Topo Ultra-Compacto - Força Bruta */
-    .topo-app { 
-        background: #fff; 
-        border-bottom: 2px solid #e5e7eb; 
-        position: sticky; 
-        top: 0; 
-        z-index: 10; 
-        display: flex; 
-        align-items: center; 
-        height: 32px; 
-        padding: 0 16px; 
-        margin-bottom: 12px;
-        overflow: hidden;
-    }
-
-    /* Seletor Horizontal Enxuto */
+    .topo-app { background: #fff; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; height: 32px; padding: 0 16px; margin-bottom: 12px; overflow: hidden; }
     .seletor-tipo { background: #e5e7eb; border-radius: 16px; padding: 4px; display: flex; gap: 4px; margin-bottom: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
     .opcao-tipo { flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px; font-weight: 800; color: #afafaf; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
     .opcao-tipo .icone { font-size: 1.1rem; }
     .opcao-tipo.ativa { background: #fff; color: #1cb0f6; box-shadow: 0 4px 8px rgba(0,0,0,0.05); transform: translateY(-1px); }
-
-    /* Títulos e Resumos maiores */
     .silo-titulo { font-weight: 800; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px; color: #afafaf; margin: 0; }
     .silo-resumo { font-size: 0.9rem; color: #777; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 50%; margin-left: 8px; }
-    
-    /* Inputs com fonte expandida para leitura clara */
     .input-jogavel { border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; font-weight: 600; padding: 12px 14px; color: #3c3c3c; width: 100%; transition: all 0.2s; resize: vertical; font-size: 1.05rem; line-height: 1.3; }
     .input-jogavel::placeholder { color: #afafaf; font-weight: 500; font-size: 1rem; }
-    
-    /* Botões mais imponentes e fáceis de tocar */
     .btn-jogavel { font-weight: 800; border-radius: 14px; border: 2px solid transparent; padding: 14px 16px; text-transform: uppercase; transition: all 0.1s; letter-spacing: 0.5px; cursor: pointer; text-align: center; user-select: none; font-size: 0.95rem; }
-    
-    /* Tabuleiro com fonte legível */
     .item-tabuleiro span.flex-grow-1 { font-size: 1rem !important; }
-
-    /* Silos de Produção (Acordeões) */
     .silo-etapa { border: 2px solid #e5e7eb; border-radius: 16px; margin-bottom: 8px; overflow: hidden; background: #fff; transition: all 0.3s ease; }
-    .silo-etapa.ativa { 
-        border-color: #1cb0f6; 
-        box-shadow: 0 4px 12px rgba(28, 176, 246, 0.15); 
-        overflow: visible; 
-        position: relative;
-        z-index: 10; 
-    }
+    .silo-etapa.ativa { border-color: #1cb0f6; box-shadow: 0 4px 12px rgba(28, 176, 246, 0.15); overflow: visible; position: relative; z-index: 10; }
     .silo-etapa.concluida { border-color: #d1d5db; background: #f9fafb; }
-
-    /* Cabeçalho do Silo */
     .silo-header { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; user-select: none; }
     .ativa .silo-titulo { color: #1cb0f6; }
     .concluida .silo-titulo { color: #58cc02; }
-
-    /* Conteúdo Interno do Silo */
     .silo-conteudo { padding: 0 12px 12px 12px; animation: animaEntrada 0.3s ease-out; }
     @@keyframes animaEntrada { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-
-    /* Estilo do Tabuleiro */
     .item-tabuleiro { display: flex; align-items: center; gap: 8px; background: #fff; border: 2px solid #e5e7eb; padding: 8px; border-radius: 12px; margin-bottom: 6px; }
     .item-tabuleiro.gabarito { border-color: #58cc02; background: #f3fce9; }
     .btn-ordem { background: #e5e7eb; color: #4b4b4b; border: none; border-radius: 8px; width: 34px; height: 34px; font-weight: bold; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
     .btn-ordem:active { background: #d1d5db; transform: scale(0.95); }
-
-    /* Elementos Comuns e Botões */
     .input-jogavel:focus { border-color: #1cb0f6; outline: none; background: #fff; box-shadow: 0 0 0 3px rgba(28,176,246,0.1); }
-    
     .btn-jogavel:active:not([disabled]) { transform: translateY(4px); box-shadow: 0 0px 0 transparent !important; margin-bottom: -4px; }
     .btn-secundario { background-color: #1cb0f6; color: white; box-shadow: 0 4px 0 #1899d6; }
     .btn-neutro { background-color: #ffffff; color: #4b4b4b; border-color: #e5e7eb; box-shadow: 0 4px 0 #e5e7eb; }
-
-    /* Metadados e Dropdowns */
     .select-custom-container { position: relative; width: 100%; margin-bottom: 12px; }
     .select-custom-header { border: 2px solid #e5e7eb; border-radius: 12px; background: #f9fafb; padding: 8px 12px; cursor: pointer; display: flex; flex-wrap: wrap; gap: 6px; align-items: center; min-height: 44px; transition: all 0.2s; }
     .select-custom-header.aberto { border-color: #1cb0f6; background: #fff; box-shadow: 0 0 0 3px rgba(28, 176, 246, 0.1); }
@@ -144,7 +102,7 @@
                 <div class="silo-header" @onclick="() => AbrirEtapa(1)">
                     <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
                         <h6 class="silo-titulo">2. A Verdade</h6>
-                        <span class="silo-resumo">@GetResumo(novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto, "Defina a opção correta...")</span>
+                        <span class="silo-resumo">@GetResumo(novaQuestao.Alternativas.FirstOrDefault(a => a.Correta)?.Texto, "Defina a opção correta...")</span>
                     </div>
                     <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 1 ? "▴" : "▾")</span>
                 </div>
@@ -171,9 +129,9 @@
 
         @if (novaQuestao.Tipo == "multipla_escolha")
         {
-            @if (novaQuestao.Alternativas.Any(a => a.IsCorreta) || etapaAtiva >= 2)
+            @if (novaQuestao.Alternativas.Any(a => a.Correta) || etapaAtiva >= 2)
             {
-                var distratores = novaQuestao.Alternativas.Where(a => !a.IsCorreta).ToList();
+                var distratores = novaQuestao.Alternativas.Where(a => !a.Correta).ToList();
                 var qtdErros = distratores.Count;
                 <div class="silo-etapa @(etapaAtiva == 2 ? "ativa" : (etapaAtiva > 2 ? "concluida" : ""))">
                     <div class="silo-header" @onclick="() => AbrirEtapa(2)">
@@ -246,7 +204,7 @@
                             {
                                 var idx = i;
                                 var alt = novaQuestao.Alternativas[idx];
-                                <div class="item-tabuleiro @(alt.IsCorreta ? "gabarito" : "")">
+                                <div class="item-tabuleiro @(alt.Correta ? "gabarito" : "")">
                                     <span class="fw-bold" style="color: #afafaf; width: 20px;">@((char)('A' + i))</span>
                                     <span class="flex-grow-1" style="font-size: 0.85rem; font-weight: 600; line-height: 1.2;">@alt.Texto</span>
                                     <div class="d-flex flex-column gap-1">
@@ -327,13 +285,14 @@
 
 @code {
     private Questao novaQuestao = new() { Alternativas = new(), Tipo = "multipla_escolha" };
-    private int etapaAtiva = 0; // 0: Enunciado, 1: Gabarito, 2: Distratores, 3: Tabuleiro, 4: Metadados
+    private int etapaAtiva = 0; 
     private string distratorTemporario = "";
     private bool gavetaDesviosAberta = false;
     private void AlternarGavetaDesvios() => gavetaDesviosAberta = !gavetaDesviosAberta;
     private string? mensagem;
     private string classeMensagem = "info";
     private readonly string idCriadorTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
+    
     // Referências para os inputs
     private ElementReference refEnunciado;
     private ElementReference refGabarito;
@@ -366,7 +325,6 @@
         else 
         {
             etapaAtiva++; 
-            // Aguarda um ciclo de renderização para o novo campo aparecer e receber o foco
             await Task.Delay(100); 
             await AplicarFocoAutomatico();
         }
@@ -381,21 +339,18 @@
         } catch { /* Proteção contra silos ainda ocultos */ }
     }
 
-    // Atualize também o AdicionarDistrator para manter o foco no campo vazio
     private async Task AdicionarDistrator() {
         if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = false });
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), Correta = false });
         distratorTemporario = "";
         
-        if (novaQuestao.Alternativas.Count(a => !a.IsCorreta) >= 4) {
+        if (novaQuestao.Alternativas.Count(a => !a.Correta) >= 4) {
             await ProximaEtapa();
         } else {
-            // Mantém o trabalhador no mesmo campo para o próximo erro
             await refNovoDistrator.FocusAsync();
         }
     }
 
-    // 2. O Acordeão Verdadeiro (Poder de recolher)
     private void AbrirEtapa(int etapa) 
     { 
         if (etapaAtiva == etapa) 
@@ -408,21 +363,20 @@
         etapaAtiva = etapa; 
         
         if (etapa == 1) 
-            distratorTemporario = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto ?? "";
+            distratorTemporario = novaQuestao.Alternativas.FirstOrDefault(a => a.Correta)?.Texto ?? "";
         else if (etapa == 2) 
             distratorTemporario = "";
     }
 
-    // 3. Garanta que o AdicionarGabarito usa a inteligência acima
     private void AdicionarGabarito() 
     {
         if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
         
-        var gabaritoExistente = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta);
+        var gabaritoExistente = novaQuestao.Alternativas.FirstOrDefault(a => a.Correta);
         if (gabaritoExistente != null) {
             gabaritoExistente.Texto = distratorTemporario.Trim();
         } else {
-            novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = true });
+            novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), Correta = true });
         }
         
         distratorTemporario = "";
@@ -436,7 +390,6 @@
         }
     }
     
-
     private void Mover(int index, int direcao) {
         int novoIndex = index + direcao;
         if (novoIndex < 0 || novoIndex >= novaQuestao.Alternativas.Count) return;
@@ -445,7 +398,6 @@
         novaQuestao.Alternativas.Insert(novoIndex, item);
     }
 
-    // Lógica Dropdown Disciplinas
     private void AlternarDropdownDisciplinas() { dropdownDisciplinasAberto = !dropdownDisciplinasAberto; if (!dropdownDisciplinasAberto) termoBuscaDisciplina = ""; }
     private void FecharDropdownDisciplinas() { dropdownDisciplinasAberto = false; termoBuscaDisciplina = ""; }
     private void ToggleDisciplinaNaLista(string disc) { if (novaQuestao.Disciplinas.Contains(disc)) novaQuestao.Disciplinas.Remove(disc); else novaQuestao.Disciplinas.Add(disc); }
@@ -456,14 +408,14 @@
         if (string.IsNullOrWhiteSpace(novaQuestao.Enunciado)) { MostrarMensagem("A missão precisa de um enunciado.", "erro"); return; }
         if (novaQuestao.Tipo == "multipla_escolha" && novaQuestao.Alternativas.Count != 5) { MostrarMensagem("O tabuleiro precisa de 5 peças exatas.", "erro"); return; }
         if (novaQuestao.Tipo == "certo_errado" && novaQuestao.Alternativas.Count != 2) { MostrarMensagem("A missão CE precisa de um gabarito.", "erro"); return; }        
-        if (!novaQuestao.Alternativas.Any(a => a.IsCorreta)) { MostrarMensagem("A missão não possui uma verdade (gabarito).", "erro"); return; }
+        if (!novaQuestao.Alternativas.Any(a => a.Correta)) { MostrarMensagem("A missão não possui uma verdade (gabarito).", "erro"); return; }
 
         if (!string.IsNullOrWhiteSpace(assuntosTextoFormulario))
         {
             novaQuestao.Assuntos = assuntosTextoFormulario.Split(',').Select(a => a.Trim()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
         }
 
-        novaQuestao.CriadorId = idCriadorTrabalhador;
+        novaQuestao.CriadorId = Guid.Parse(idCriadorTrabalhador);
 
         try
         {
@@ -508,8 +460,8 @@
         if (string.IsNullOrEmpty(distratorTemporario)) return;
         
         novaQuestao.Alternativas.Clear();
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Certo", IsCorreta = distratorTemporario == "Certo" });
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Errado", IsCorreta = distratorTemporario == "Errado" });
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Certo", Correta = distratorTemporario == "Certo" });
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Errado", Correta = distratorTemporario == "Errado" });
         
         etapaAtiva = 4; // O Salto Quântico! Pula os desvios e vai direto pras Tags.
     }

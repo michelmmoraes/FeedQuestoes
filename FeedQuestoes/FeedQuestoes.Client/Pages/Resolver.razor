@@ -49,7 +49,7 @@
     
     .texto-alternativa { font-size: 0.95rem; font-weight: 600; color: #4b4b4b; line-height: 1.4; word-break: break-word; }
 
-.barra-acao-inferior { 
+    .barra-acao-inferior { 
         position: fixed; 
         bottom: 0; 
         left: 0; 
@@ -57,7 +57,6 @@
         background: rgba(255, 255, 255, 0.95); 
         backdrop-filter: blur(10px); 
         padding: 20px; 
-        /* O mesmo cálculo de respiro blindado */
         padding-bottom: calc(30px + env(safe-area-inset-bottom)); 
         border-top: 2px solid #e5e7eb; 
         z-index: 1000; 
@@ -121,11 +120,11 @@
                             <div class="num-bolinha">@letra</div>
                             <div class="texto-alternativa">@alt.Texto</div>
                             
-                            @if (respondido && alt.IsCorreta)
+                            @if (respondido && alt.Correta)
                             {
                                 <span class="fs-5 text-success fw-bold ms-auto">✓</span>
                             }
-                            else if (respondido && alt.Id == alternativaSelecionadaId && !alt.IsCorreta)
+                            else if (respondido && alt.Id == alternativaSelecionadaId && !alt.Correta)
                             {
                                 <span class="fs-5 text-danger fw-bold ms-auto">×</span>
                             }
@@ -178,10 +177,9 @@
         carregando = true;
         try
         {
-            // Busca e desempacota com o transportador robusto
             var jsonBusca = await Http.GetStringAsync("/api/questoes");
             var todasQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonBusca) ?? new();
-            questaoAtual = todasQuestoes.FirstOrDefault(q => q.Id == QuestaoId);
+            questaoAtual = todasQuestoes.FirstOrDefault(q => q.Id == Guid.Parse(QuestaoId));
         }
         catch (Exception ex)
         {
@@ -207,8 +205,8 @@
         }
 
         var alt = questaoAtual!.Alternativas.First(a => a.Id == altId);
-        if (alt.IsCorreta) return "correta-revelada desativada";
-        if (alternativaSelecionadaId == altId && !alt.IsCorreta) return "errada-revelada desativada";
+        if (alt.Correta) return "correta-revelada desativada";
+        if (alternativaSelecionadaId == altId && !alt.Correta) return "errada-revelada desativada";
         return "desativada opacity-50";
     }
 
@@ -221,14 +219,13 @@
 
         var novaResposta = new Resposta
         {
-            RespondidoPor = idTrabalhador,
+            RespondidoPor = Guid.Parse(idTrabalhador),
             QuestaoId = questaoAtual.Id,
-            Correta = altEscolhida.IsCorreta
+            Correta = altEscolhida.Correta
         };
 
         try
         {
-            // Empacota e envia via API com o formato correto
             var jsonEnvio = Newtonsoft.Json.JsonConvert.SerializeObject(novaResposta);
             await Http.PostAsync("/api/respostas", new StringContent(jsonEnvio, System.Text.Encoding.UTF8, "application/json"));
         }
@@ -240,6 +237,6 @@
 
     private void VoltarParaLista()
     {
-        NavManager.NavigateTo("/resolver");
+        NavManager.NavigateTo("/feed");
     }
 }

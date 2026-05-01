@@ -1,119 +1,137 @@
 ﻿@page "/"
+@using System.Linq
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
 @inject NavigationManager NavManager
 
-<PageTitle>Base Coletiva | Início</PageTitle>
+<PageTitle>Mapa de Conhecimento | Base Coletiva</PageTitle>
 
 <style>
-    .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 40px; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .home-container { padding-bottom: 100px; background-color: #f7f9fc; min-height: 100vh; font-family: 'Segoe UI', system-ui, sans-serif; }
+    .header-secao { padding: 30px 20px; background: #fff; border-bottom: 2px solid #e5e7eb; }
     
-    .topo-home { background: #fff; padding: 30px 20px; border-bottom: 2px solid #e5e7eb; text-align: center; margin-bottom: 24px; }
+    .arvore-container { padding: 25px 15px; }
+
+    /* Estrutura do Nó e da Hierarquia */
+    .assunto-nodo { margin-bottom: 10px; }
     
-    .grid-atalhos { display: grid; grid-template-columns: 1fr; gap: 20px; padding: 0 20px; max-width: 500px; margin: 0 auto; }
-
-    .card-atalho { 
-        background: #ffffff; 
-        border-radius: 20px; 
-        border: 2px solid #e5e7eb; 
-        box-shadow: 0 8px 0 #e5e7eb; 
-        padding: 20px; 
-        display: flex; 
-        align-items: center; 
-        gap: 20px; 
-        cursor: pointer; 
-        transition: transform 0.1s, box-shadow 0.1s;
-        text-align: left;
-        text-decoration: none;
-        color: inherit;
+    .card-assunto { 
+        background: #ffffff; border: 2px solid #e5e7eb; border-radius: 14px; padding: 12px 16px; 
+        cursor: pointer; transition: all 0.1s ease-in-out; box-shadow: 0 4px 0 #e5e7eb;
+        display: flex; align-items: center; gap: 12px; position: relative;
     }
+    .card-assunto:active { transform: translateY(3px); box-shadow: 0 1px 0 #e5e7eb; }
+    .card-assunto:hover { border-color: #1cb0f6; }
+    
+    .emoji-assunto { font-size: 1.4rem; }
+    .nome-assunto { font-weight: 800; color: #4b4b4b; font-size: 0.9rem; line-height: 1.2; }
 
-    .card-atalho:active { transform: translateY(4px); box-shadow: 0 4px 0 #e5e7eb; }
-
-    .icone-circulo { 
-        width: 60px; 
-        height: 60px; 
-        border-radius: 18px; 
-        display: flex; 
-        align-items: center; 
-        justify-content: center; 
-        font-size: 28px; 
-        flex-shrink: 0;
-        border: 2px solid rgba(0,0,0,0.1);
-    }
-
-    .info-atalho h6 { margin: 0; font-weight: 800; font-size: 1.1rem; color: #4b4b4b; }
-    .info-atalho p { margin: 0; font-size: 0.85rem; color: #777; font-weight: 600; }
-
-    /* Cores Temáticas */
-    .bg-treino { background-color: #1cb0f6; color: white; }
-    .bg-mural { background-color: #ffc800; color: white; }
-    .bg-forja { background-color: #58cc02; color: white; }
-    .bg-stats { background-color: #ce82ff; color: white; }
-
-    .frase-dia { 
-        margin-top: 40px; 
-        padding: 20px; 
-        text-align: center; 
-        color: #afafaf; 
-        font-style: italic; 
-        font-size: 0.9rem;
-        line-height: 1.4;
+    /* A linha tracejada que guia a leitura da hierarquia */
+    .hierarquia-filhos {
+        margin-top: 10px;
+        margin-left: 22px;
+        padding-left: 18px;
+        border-left: 2px dashed #cbd5e1;
+        display: flex;
+        flex-direction: column;
     }
 </style>
 
-<div class="bg-jogavel">
-    
-    <div class="topo-home shadow-sm">
-        <h2 class="fw-black mb-1" style="color: #1cb0f6; font-weight: 900; letter-spacing: -1px;">🚩 Base Coletiva</h2>
-        <p class="text-muted fw-bold mb-0">Socializando o conhecimento para a vitória.</p>
+<div class="home-container">
+    <div class="header-secao">
+        <h4 class="fw-black mb-1">Mapa de Operações 🗺️</h4>
+        <p class="text-muted fw-bold small mb-0">Cada assunto é um território a ser conquistado.</p>
     </div>
 
-    <div class="grid-atalhos">
-        
-        @* Treino Contínuo - O Carro Chefe *@
-        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/feed-continuo")'>
-            <div class="icone-circulo bg-treino">🔥</div>
-            <div class="info-atalho">
-                <h6>Treino Contínuo</h6>
-                <p>Missões rápidas em fluxo infinito.</p>
-            </div>
+    @if (carregando)
+    {
+        <div class="text-center p-5 text-muted fw-bold">
+            <div class="spinner-border text-primary mb-3"></div>
+            <p>Sincronizando meios de produção...</p>
         </div>
-
-        @* Mural de Questões *@
-        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/resolver")'>
-            <div class="icone-circulo bg-mural">🌍</div>
-            <div class="info-atalho">
-                <h6>Mural Coletivo</h6>
-                <p>Escolha sua batalha na base de dados.</p>
-            </div>
+    }
+    else
+    {
+        <div class="arvore-container">
+            @* Inicializamos a renderização a partir das Raízes (assuntos que não têm pai) *@
+            @foreach (var raiz in ObterRaizes())
+            {
+                @RenderArvore(raiz)
+            }
         </div>
-
-        @* Criar Questão *@
-        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/nova-questao")'>
-            <div class="icone-circulo bg-forja">🛠️</div>
-            <div class="info-atalho">
-                <h6>Criar Questão</h6>
-                <p>Contribua com a base do povo.</p>
-            </div>
-        </div>
-
-        @* Estatísticas *@
-        <div class="card-atalho" @onclick='() => NavManager.NavigateTo("/desempenho")'>
-            <div class="icone-circulo bg-stats">📈</div>
-            <div class="info-atalho">
-                <h6>Estatísticas da Práxis</h6>
-                <p>Acompanhe seu avanço e eficácia.</p>
-            </div>
-        </div>
-
-    </div>
-
-    <div class="frase-dia px-4">
-        "O trabalhador que estuda é o arquiteto da própria libertação."
-    </div>
-
+    }
 </div>
 
 @code {
-    // Aqui podemos futuramente carregar um resumo rápido de XP 
-    // ou saudações personalizadas para o camarada.
+    private List<Assunto> listaAssuntos = new();
+    private List<AssuntoHierarquia> relacoes = new();
+    private bool carregando = true;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            var taskAssuntos = Http.GetStringAsync("/api/territorios");
+            var taskHierarquia = Http.GetStringAsync("/api/territorios/hierarquia");
+
+            await Task.WhenAll(taskAssuntos, taskHierarquia);
+
+            listaAssuntos = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Assunto>>(await taskAssuntos) ?? new();
+            relacoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<AssuntoHierarquia>>(await taskHierarquia) ?? new();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro na sincronização da base: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // O CORAÇÃO DA RECURSIVIDADE: Um método que gera blocos visuais HTML
+    // ------------------------------------------------------------------------
+    private RenderFragment RenderArvore(Assunto assunto) => __builder =>
+    {
+        <div class="assunto-nodo">
+            @* O card principal, sempre clicável *@
+            <div class="card-assunto" @onclick="() => Explorar(assunto.Id)">
+                <span class="emoji-assunto">🎯</span>
+                <span class="nome-assunto">@assunto.Nome</span>
+            </div>
+            
+            @* A mágica acontece aqui: procuramos filhos e, se houver, o método chama a si mesmo *@
+            @{ var filhos = ObterFilhos(assunto.Id); }
+            @if (filhos.Any())
+            {
+                <div class="hierarquia-filhos">
+                    @foreach (var filho in filhos)
+                    {
+                        @RenderArvore(filho)
+                    }
+                </div>
+            }
+        </div>
+    };
+
+    // ------------------------------------------------------------------------
+    // FILTROS COLETIVOS (LINQ)
+    // ------------------------------------------------------------------------
+    
+    private List<Assunto> ObterRaizes()
+    {
+        // Uma raiz é qualquer assunto que NUNCA aparece como 'Filho' na tabela de relações
+        var idsFilhos = relacoes.Select(r => r.FilhoId).ToHashSet();
+        return listaAssuntos.Where(a => !idsFilhos.Contains(a.Id)).ToList();
+    }
+
+    private List<Assunto> ObterFilhos(Guid paiId)
+    {
+        // Extrai os filhos diretos do nó atual
+        var idsFilhos = relacoes.Where(r => r.PaiId == paiId).Select(r => r.FilhoId).ToHashSet();
+        return listaAssuntos.Where(a => idsFilhos.Contains(a.Id)).ToList();
+    }
+
+    private void Explorar(Guid id) => NavManager.NavigateTo($"/territorio/{id}");
 }

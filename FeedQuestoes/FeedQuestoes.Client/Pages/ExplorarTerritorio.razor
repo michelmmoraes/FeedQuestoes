@@ -1,0 +1,84 @@
+﻿@page "/territorio/{Id:guid}"
+@using FeedQuestoes.Client.Modelos
+@inject HttpClient Http
+
+<PageTitle>Explorar Assunto | Base Coletiva</PageTitle>
+
+<div class="container-fluid py-4" style="max-width: 600px; margin: 0 auto;">
+    
+    @* Cabeçalho de Identificação *@
+    <div class="d-flex align-items-center mb-4">
+        <span class="fs-1 me-3">📚</span>
+        <div>
+            <h4 class="fw-bold text-dark mb-0">Reconhecimento de Assunto</h4>
+            <small class="text-muted fw-bold">Setor: @Id.ToString().Substring(0, 8)</small>
+        </div>
+    </div>
+
+    @if (carregando)
+    {
+        <div class="text-center p-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <p class="mt-2 fw-bold text-muted">Consultando arquivos centrais...</p>
+        </div>
+    }
+    else if (assuntoAtual == null)
+    {
+        <div class="alert alert-warning border-2 rounded-4">
+            <h5 class="fw-bold">⚠️ Assunto não catalogado</h5>
+            <p class="mb-0">Este território ainda não possui registros em nossa base de dados.</p>
+        </div>
+    }
+    else
+    {
+        @* Conteúdo Principal do Assunto *@
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
+            <div class="card-body p-4">
+                <h2 class="fw-black text-primary mb-3">@assuntoAtual.Nome</h2>
+                <div class="text-secondary fs-5" style="line-height: 1.6;">
+                    @assuntoAtual.Descricao
+                </div>
+            </div>
+        </div>
+
+        @* Zona de Ação: Onde o conhecimento é posto em prática *@
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
+                Iniciar Missão de Estudo ⚔️
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill fw-bold">
+                Ver Materiais Coletivos 📖
+            </button>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid Id { get; set; }
+    
+    private bool carregando = true;
+    private Assunto? assuntoAtual;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            // O front-end faz a requisição direta para a Minimal API
+            var response = await Http.GetAsync($"/api/territorios/{Id}");
+            
+            if (response.IsSuccessStatusCode)
+            {
+                var json = await response.Content.ReadAsStringAsync();
+                assuntoAtual = Newtonsoft.Json.JsonConvert.DeserializeObject<Assunto>(json);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Erro na extração de dados: {ex.Message}");
+        }
+        finally
+        {
+            carregando = false;
+        }
+    }
+}

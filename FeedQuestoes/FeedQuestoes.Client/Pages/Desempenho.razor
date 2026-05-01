@@ -187,16 +187,14 @@
 
 @code {
     private bool carregando = true;
-    private string abaAtual = "vitrine"; // A aba padrão agora é a vitrine de produção
+    private string abaAtual = "vitrine"; 
     private readonly string idTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
 
-    // Dados de Desempenho
     private int totalRespostas = 0;
     private int totalAcertos = 0;
     private int totalErros = 0;
     private int taxaAcerto = 0;
 
-    // Dados da Vitrine
     private List<Questao> minhasQuestoes = new();
 
     protected override async Task OnInitializedAsync()
@@ -213,7 +211,6 @@
     {
         try
         {
-            // 1. Busca as Métricas do Camarada
             var jsonRespostas = await Http.GetStringAsync($"/api/respostas/{idTrabalhador}");
             var historico = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Resposta>>(jsonRespostas) ?? new();
             
@@ -225,12 +222,11 @@
                 taxaAcerto = (int)Math.Round((double)totalAcertos / totalRespostas * 100);
             }
 
-            // 2. Busca a Produção Forjada para a Vitrine
             var jsonQuestoes = await Http.GetStringAsync("/api/questoes");
             var todasQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonQuestoes) ?? new();
             
             minhasQuestoes = todasQuestoes
-                .Where(q => q.CriadorId == idTrabalhador)
+                .Where(q => q.CriadorId == Guid.Parse(idTrabalhador))
                 .OrderByDescending(q => q.CriadoEm)
                 .ToList();
         }
@@ -244,9 +240,8 @@
         }
     }
 
-    private void AbrirQuestao(string questaoId)
+    private void AbrirQuestao(Guid questaoId)
     {
-        // Envia para o Feed Perfil passando quem é o criador e qual foi a questão clicada
         NavManager.NavigateTo($"/feed-perfil/{idTrabalhador}/{questaoId}");
     }
 

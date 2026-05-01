@@ -1,43 +1,47 @@
 ﻿using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
-namespace FeedQuestoes.Client.Modelos
+namespace FeedQuestoes.Client.Modelos;
+
+[Table("questao")]
+public class Questao : BaseModel
 {
-    [Table("questao")]
-    public class Questao : BaseModel
-    {
-        [PrimaryKey("id", false)]
-        public string Id { get; set; }
+    [PrimaryKey("id", false)]
+    public Guid Id { get; set; }
 
-        [Column("criador_id")]
-        public string CriadorId { get; set; }
+    [Column("criador_id")]
+    public Guid CriadorId { get; set; }
 
-        [Column("tipo")]
-        public string Tipo { get; set; }
+    [Column("tipo")]
+    public string Tipo { get; set; } = string.Empty;
 
-        [Column("enunciado")]
-        public string Enunciado { get; set; }
+    [Column("enunciado")]
+    public string Enunciado { get; set; } = string.Empty;
 
-        [Column("alternativas")]
-        public List<Alternativa> Alternativas { get; set; } = new List<Alternativa>();
+    [Column("alternativas")]
+    public List<Alternativa> Alternativas { get; set; } = new();
 
-        [Column("disciplinas")]
-        public List<string> Disciplinas { get; set; } = new();
+    [Column("criado_em")]
+    public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
-        [Column("assuntos")]
-        public List<string> Assuntos { get; set; } = new();
+    // --- PROPRIEDADES FANTASMAS (MEMÓRIA UI) ---
+    // Não possuem a tag [Column], logo o Supabase as ignora no INSERT/UPDATE,
+    // mas o Blazor pode usá-las livremente para desenhar a tela.
+    public List<string> Disciplinas { get; set; } = new();
+    public List<string> Assuntos { get; set; } = new();
+}
 
-        [Column("criado_em", ignoreOnInsert: true, ignoreOnUpdate: true)]
-        public DateTime CriadoEm { get; set; }
-    }
+public class Alternativa
+{
+    [JsonProperty("id")]
+    public string Id { get; set; } = string.Empty;
 
-    // Estrutura que mapeia o nosso JSONB de alternativas
-    public class Alternativa
-    {
-        public string Id { get; set; }
-        public string Texto { get; set; }
-        public bool IsCorreta { get; set; }
-    }
+    [JsonProperty("texto")]
+    public string Texto { get; set; } = string.Empty;
+
+    [JsonProperty("correta")]
+    public bool Correta { get; set; }
 }
