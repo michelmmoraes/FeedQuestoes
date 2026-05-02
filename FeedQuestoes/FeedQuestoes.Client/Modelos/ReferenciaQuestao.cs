@@ -1,13 +1,14 @@
 ﻿using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
-using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace FeedQuestoes.Client.Modelos;
 
 [Table("referencia_questao")]
 public class ReferenciaQuestao : BaseModel
 {
-    [PrimaryKey("id", false)]
+    [PrimaryKey("id", true)]
     public Guid Id { get; set; }
 
     [Column("questao_id")]
@@ -16,26 +17,10 @@ public class ReferenciaQuestao : BaseModel
     [Column("recurso_id")]
     public Guid RecursoId { get; set; }
 
-    // Nosso JSONB com os offsets do texto
+    // O C# transforma esse dicionário perfeitamente no jsonb do PostgreSQL
     [Column("trecho")]
-    public TrechoAncora Trecho { get; set; } = new();
+    public Dictionary<string, string> Trecho { get; set; } = new();
 
     [Column("ordem")]
-    public int Ordem { get; set; }
-
-    [Column("criado_em")]
-    public DateTime CriadoEm { get; set; }
-}
-
-// Classe auxiliar para mapear o JSON da âncora
-public class TrechoAncora
-{
-    [JsonProperty("inicio")]
-    public int Inicio { get; set; }
-
-    [JsonProperty("fim")]
-    public int Fim { get; set; }
-
-    [JsonProperty("texto_original")]
-    public string TextoOriginal { get; set; } = string.Empty;
+    public int Ordem { get; set; } = 0;
 }

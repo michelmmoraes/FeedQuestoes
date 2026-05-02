@@ -1,6 +1,5 @@
 ﻿using Supabase.Postgrest.Attributes;
 using Supabase.Postgrest.Models;
-using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
 
@@ -9,7 +8,8 @@ namespace FeedQuestoes.Client.Modelos;
 [Table("questao")]
 public class Questao : BaseModel
 {
-    [PrimaryKey("id", false)]
+    // MANTIDO COMO TRUE: Nossa aplicação é soberana na geração de IDs
+    [PrimaryKey("id", true)]
     public Guid Id { get; set; }
 
     [Column("criador_id")]
@@ -28,20 +28,28 @@ public class Questao : BaseModel
     public DateTime CriadoEm { get; set; } = DateTime.UtcNow;
 
     // --- PROPRIEDADES FANTASMAS (MEMÓRIA UI) ---
-    // Não possuem a tag [Column], logo o Supabase as ignora no INSERT/UPDATE,
-    // mas o Blazor pode usá-las livremente para desenhar a tela.
+    // Usando o nome explícito de ambas as bibliotecas para evitar a "guerra dos sindicatos"
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Newtonsoft.Json.JsonIgnore]
     public List<string> Disciplinas { get; set; } = new();
+
+    [System.Text.Json.Serialization.JsonIgnore]
+    [Newtonsoft.Json.JsonIgnore]
     public List<string> Assuntos { get; set; } = new();
 }
 
 public class Alternativa
 {
-    [JsonProperty("id")]
+    // Acordo diplomático: O passaporte das duas alfândegas
+    [System.Text.Json.Serialization.JsonPropertyName("Id")]
+    [Newtonsoft.Json.JsonProperty("Id")]
     public string Id { get; set; } = string.Empty;
 
-    [JsonProperty("texto")]
+    [System.Text.Json.Serialization.JsonPropertyName("Texto")]
+    [Newtonsoft.Json.JsonProperty("Texto")]
     public string Texto { get; set; } = string.Empty;
 
-    [JsonProperty("correta")]
-    public bool Correta { get; set; }
+    [System.Text.Json.Serialization.JsonPropertyName("IsCorreta")]
+    [Newtonsoft.Json.JsonProperty("IsCorreta")]
+    public bool IsCorreta { get; set; }
 }

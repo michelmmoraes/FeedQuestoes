@@ -36,6 +36,29 @@
         console.log('🌟 O ALVARÁ DE INSTALAÇÃO FOI LIBERADO!');
         });
         }
+
+        window.obterSelecaoTatica = () => {
+        const sel = window.getSelection();
+        const texto = sel.toString().trim();
+        
+        if (!texto) return null;
+
+        const range = sel.getRangeAt(0);
+        const rects = range.getClientRects();
+        
+        if (rects.length === 0) return null;
+
+        const ultimoRect = rects[rects.length - 1];
+
+        return {
+        texto: texto,
+        // Posição cravada no fim do texto
+        x: ultimoRect.right,
+        y: ultimoRect.top + (ultimoRect.height / 2)
+        };
+        };
+    
+        window.limparSelecao = () => window.getSelection().removeAllRanges();
     </script>
 </body>
 

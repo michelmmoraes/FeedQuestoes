@@ -1,0 +1,91 @@
+﻿@using Markdig
+
+@* Onde a mágica acontece: O (MarkupString) é a nossa assinatura de que o conteúdo é seguro *@
+<div class="recurso-markdown">
+    @((MarkupString)htmlRenderizado)
+</div>
+
+<style>
+    /* Estética padronizada para todo o conhecimento forjado */
+    .recurso-markdown {
+        font-family: 'Segoe UI', system-ui, sans-serif;
+        line-height: 1.6;
+        color: #4b4b4b;
+        font-size: 1rem;
+    }
+    
+    .recurso-markdown h1, .recurso-markdown h2, .recurso-markdown h3 {
+        color: #1cb0f6;
+        font-weight: 800;
+        margin-top: 1.5em;
+        margin-bottom: 0.5em;
+    }
+    
+    .recurso-markdown h1 { border-bottom: 3px solid #e5e7eb; padding-bottom: 5px; }
+    
+    .recurso-markdown p { margin-bottom: 1em; }
+    
+    .recurso-markdown strong { font-weight: 800; color: #3c3c3c; }
+    
+    .recurso-markdown blockquote {
+        border-left: 5px solid #58cc02;
+        background: #f3fce9;
+        padding: 10px 15px;
+        margin: 1em 0;
+        border-radius: 0 12px 12px 0;
+        font-style: italic;
+    }
+    
+    .recurso-markdown code {
+        background: #e5e7eb;
+        padding: 2px 6px;
+        border-radius: 6px;
+        font-family: monospace;
+        font-size: 0.9em;
+        color: #ea2b2b;
+    }
+    
+    .recurso-markdown ul, .recurso-markdown ol {
+        margin-bottom: 1em;
+        padding-left: 20px;
+    }
+    
+    /* Tabelas táticas para resumos de matérias */
+    .recurso-markdown table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 1.5em;
+        border: 2px solid #e5e7eb;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    .recurso-markdown th { background: #f7f9fc; font-weight: 800; padding: 10px; border-bottom: 2px solid #e5e7eb; text-align: left; }
+    .recurso-markdown td { padding: 10px; border-bottom: 1px solid #e5e7eb; }
+</style>
+
+@code {
+    // A matéria-prima que o componente vai receber
+    [Parameter]
+    public string ConteudoBruto { get; set; } = string.Empty;
+
+    // O produto final processado
+    private string htmlRenderizado = string.Empty;
+
+    // Esse evento roda toda vez que a matéria-prima (ConteudoBruto) muda
+    protected override void OnParametersSet()
+    {
+        if (string.IsNullOrWhiteSpace(ConteudoBruto))
+        {
+            htmlRenderizado = "<em>Recurso vazio.</em>";
+            return;
+        }
+
+        // Ligamos as esteiras da fábrica com todas as extensões avançadas (tabelas, listas, etc)
+        var pipeline = new MarkdownPipelineBuilder()
+            .UseAdvancedExtensions()
+            .Build();
+
+        // O Markdig transforma o Markdown puro em HTML
+        htmlRenderizado = Markdown.ToHtml(ConteudoBruto, pipeline);
+    }
+}

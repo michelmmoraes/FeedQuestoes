@@ -1,4 +1,4 @@
-﻿@page "/resolver/{QuestaoId}"
+﻿@page "/resolver/{QuestaoId:guid}"
 @using FeedQuestoes.Client.Modelos
 @inject HttpClient Http
 @inject NavigationManager NavManager
@@ -120,11 +120,11 @@
                             <div class="num-bolinha">@letra</div>
                             <div class="texto-alternativa">@alt.Texto</div>
                             
-                            @if (respondido && alt.Correta)
+                            @if (respondido && alt.IsCorreta)
                             {
                                 <span class="fs-5 text-success fw-bold ms-auto">✓</span>
                             }
-                            else if (respondido && alt.Id == alternativaSelecionadaId && !alt.Correta)
+                            else if (respondido && alt.Id == alternativaSelecionadaId && !alt.IsCorreta)
                             {
                                 <span class="fs-5 text-danger fw-bold ms-auto">×</span>
                             }
@@ -140,7 +140,7 @@
                 @if (!respondido)
                 {
                     <button class="btn-jogavel btn-primario" 
-                            disabled="@(string.IsNullOrEmpty(alternativaSelecionadaId))" 
+                            disabled="@(alternativaSelecionadaId == null)" 
                             @onclick="ConfirmarResposta">
                         Confirmar Resposta
                     </button>
@@ -158,7 +158,7 @@
 
 @code {
     [Parameter]
-    public string QuestaoId { get; set; }
+    public Guid QuestaoId { get; set; }
 
     private Questao? questaoAtual;
     private string? alternativaSelecionadaId;
@@ -179,7 +179,7 @@
         {
             var jsonBusca = await Http.GetStringAsync("/api/questoes");
             var todasQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonBusca) ?? new();
-            questaoAtual = todasQuestoes.FirstOrDefault(q => q.Id == Guid.Parse(QuestaoId));
+            questaoAtual = todasQuestoes.FirstOrDefault(q => q.Id == QuestaoId);
         }
         catch (Exception ex)
         {
@@ -205,14 +205,14 @@
         }
 
         var alt = questaoAtual!.Alternativas.First(a => a.Id == altId);
-        if (alt.Correta) return "correta-revelada desativada";
-        if (alternativaSelecionadaId == altId && !alt.Correta) return "errada-revelada desativada";
+        if (alt.IsCorreta) return "correta-revelada desativada";
+        if (alternativaSelecionadaId == altId && !alt.IsCorreta) return "errada-revelada desativada";
         return "desativada opacity-50";
     }
 
     private async Task ConfirmarResposta()
     {
-        if (string.IsNullOrEmpty(alternativaSelecionadaId) || questaoAtual == null) return;
+        if (alternativaSelecionadaId == null || questaoAtual == null) return;
 
         var altEscolhida = questaoAtual.Alternativas.First(a => a.Id == alternativaSelecionadaId);
         respondido = true;
@@ -221,7 +221,7 @@
         {
             RespondidoPor = Guid.Parse(idTrabalhador),
             QuestaoId = questaoAtual.Id,
-            Correta = altEscolhida.Correta
+            Correta = altEscolhida.IsCorreta
         };
 
         try

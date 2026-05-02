@@ -6,9 +6,7 @@
 
 <style>
     *, *::before, *::after { box-sizing: border-box; }
-
     .bg-jogavel { background-color: #f7f9fc; min-height: 100vh; padding-bottom: 100px; font-family: 'Segoe UI', system-ui, sans-serif; }
-    
     .topo-app { background: #fff; border-bottom: 2px solid #e5e7eb; position: sticky; top: 0; z-index: 10; display: flex; align-items: center; height: 32px; padding: 0 16px; margin-bottom: 12px; overflow: hidden; }
     .seletor-tipo { background: #e5e7eb; border-radius: 16px; padding: 4px; display: flex; gap: 4px; margin-bottom: 12px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
     .opcao-tipo { flex: 1; text-align: center; padding: 8px 4px; border-radius: 12px; font-weight: 800; color: #afafaf; cursor: pointer; transition: all 0.2s; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; user-select: none; display: flex; align-items: center; justify-content: center; gap: 6px; }
@@ -51,7 +49,6 @@
 </style>
 
 <div class="bg-jogavel p-2">
-    
     <div class="topo-app">
         <h6 class="fw-bold m-0 p-0 text-dark text-center w-100" style="letter-spacing: -0.5px; line-height: 32px; font-size: 0.85rem;">
             🛠️ Forjar Missão
@@ -60,6 +57,20 @@
 
     <div class="container-fluid p-0" style="max-width: 600px; margin: 0 auto;">
         
+        @* Insígnia do Vínculo Oculto (Opcional, só aparece se extraído) *@
+        @if (!string.IsNullOrEmpty(TrechoCapturado))
+        {
+            <div class="alert mb-3 border-2 rounded-4 p-2 d-flex align-items-start gap-2" style="background: #eef2f6; border-color: #d1d5db;">
+                <span class="fs-4">🔗</span>
+                <div>
+                    <h6 class="fw-bold mb-0 text-dark" style="font-size: 0.8rem; text-transform: uppercase;">Lastro Teórico Ativo</h6>
+                    <small class="text-muted" style="font-size: 0.8rem; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                        "@TrechoCapturado"
+                    </small>
+                </div>
+            </div>
+        }
+
         <div class="seletor-tipo mt-2 mb-3">
             <div class="opcao-tipo @(novaQuestao.Tipo == "multipla_escolha" ? "ativa" : "")" @onclick="SetMultiplaEscolha">
                 <span class="icone">🅰️</span> <span class="text-truncate">Múltipla Escolha</span>
@@ -90,7 +101,7 @@
             @if (etapaAtiva == 0)
             {
                 <div class="silo-conteudo">
-                    <textarea class="input-jogavel mb-2" rows="4" @bind="novaQuestao.Enunciado" placeholder="Descreva a missão ou a teoria base..."></textarea>
+                    <textarea @ref="refEnunciado" class="input-jogavel mb-2" rows="4" @bind="novaQuestao.Enunciado" placeholder="Descreva a missão ou a teoria base..."></textarea>
                     <button class="btn-jogavel btn-secundario w-100" @onclick="ProximaEtapa">Confirmar Comando ➔</button>
                 </div>
             }
@@ -102,7 +113,7 @@
                 <div class="silo-header" @onclick="() => AbrirEtapa(1)">
                     <div class="d-flex align-items-center flex-grow-1 overflow-hidden">
                         <h6 class="silo-titulo">2. A Verdade</h6>
-                        <span class="silo-resumo">@GetResumo(novaQuestao.Alternativas.FirstOrDefault(a => a.Correta)?.Texto, "Defina a opção correta...")</span>
+                        <span class="silo-resumo">@GetResumo(novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto, "Defina a opção correta...")</span>
                     </div>
                     <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 1 ? "▴" : "▾")</span>
                 </div>
@@ -111,7 +122,7 @@
                     <div class="silo-conteudo">
                     @if (novaQuestao.Tipo == "multipla_escolha")
                     {
-                        <textarea class="input-jogavel mb-2" style="border-color: #58cc02; background: #f3fce9;" rows="2" @bind="distratorTemporario" placeholder="Digite a resposta certa..."></textarea>
+                        <textarea @ref="refGabarito" class="input-jogavel mb-2" style="border-color: #58cc02; background: #f3fce9;" rows="2" @bind="distratorTemporario" placeholder="Digite a resposta certa..."></textarea>
                         <button class="btn-jogavel w-100 text-white" style="background: #58cc02; box-shadow: 0 4px 0 #58a700;" @onclick="AdicionarGabarito">Selar Verdade ✓</button>
                     }
                     else
@@ -122,16 +133,16 @@
                         </div>
                         <button class="btn-jogavel w-100 text-white" style="background: #58cc02; box-shadow: 0 4px 0 #58a700;" @onclick="ConfirmarGabaritoCE">Selar Verdade ✓</button>
                     }
-                </div>
+                    </div>
                 }
             </div>
         }
 
         @if (novaQuestao.Tipo == "multipla_escolha")
         {
-            @if (novaQuestao.Alternativas.Any(a => a.Correta) || etapaAtiva >= 2)
+            @if (novaQuestao.Alternativas.Any(a => a.IsCorreta) || etapaAtiva >= 2)
             {
-                var distratores = novaQuestao.Alternativas.Where(a => !a.Correta).ToList();
+                var distratores = novaQuestao.Alternativas.Where(a => !a.IsCorreta).ToList();
                 var qtdErros = distratores.Count;
                 <div class="silo-etapa @(etapaAtiva == 2 ? "ativa" : (etapaAtiva > 2 ? "concluida" : ""))">
                     <div class="silo-header" @onclick="() => AbrirEtapa(2)">
@@ -139,7 +150,7 @@
                             <h6 class="silo-titulo">3. Os Desvios (@qtdErros/4)</h6>
                             @if (qtdErros == 4)
                             {
-                                <span class="silo-resumo" style="color: #58cc02;">Arsenal completo!</span>                      
+                                <span class="silo-resumo" style="color: #58cc02;">Arsenal completo!</span>                       
                             }
                         </div>
                         <span class="fw-bold fs-5" style="color: #afafaf;">@(etapaAtiva == 2 ? "▴" : "▾")</span>
@@ -174,7 +185,7 @@
 
                             @if (qtdErros < 4)
                             {
-                                <textarea class="input-jogavel mb-2" rows="2" @bind="distratorTemporario" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Digite um erro plausível..."></textarea>
+                                <textarea @ref="refNovoDistrator" class="input-jogavel mb-2" rows="2" @bind="distratorTemporario" @bind:event="oninput" @onkeyup="HandleKeyUp" placeholder="Digite um erro plausível..."></textarea>
                                 <button class="btn-jogavel btn-neutro w-100" @onclick="AdicionarDistrator">Forjar Erro +</button>
                             }
                             else
@@ -204,7 +215,7 @@
                             {
                                 var idx = i;
                                 var alt = novaQuestao.Alternativas[idx];
-                                <div class="item-tabuleiro @(alt.Correta ? "gabarito" : "")">
+                                <div class="item-tabuleiro @(alt.IsCorreta ? "gabarito" : "")">
                                     <span class="fw-bold" style="color: #afafaf; width: 20px;">@((char)('A' + i))</span>
                                     <span class="flex-grow-1" style="font-size: 0.85rem; font-weight: 600; line-height: 1.2;">@alt.Texto</span>
                                     <div class="d-flex flex-column gap-1">
@@ -284,6 +295,15 @@
 </div>
 
 @code {
+    // 🚩 CORREÇÃO DO LASTRO: A dupla credencial obriga o Blazor a ler a URL
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "recursoId")]
+    public Guid? RecursoId { get; set; }
+
+    [Parameter]
+    [SupplyParameterFromQuery(Name = "trecho")]
+    public string? TrechoCapturado { get; set; }
+
     private Questao novaQuestao = new() { Alternativas = new(), Tipo = "multipla_escolha" };
     private int etapaAtiva = 0; 
     private string distratorTemporario = "";
@@ -293,12 +313,10 @@
     private string classeMensagem = "info";
     private readonly string idCriadorTrabalhador = "e414792c-8943-491d-8bb5-947fe554f25d";
     
-    // Referências para os inputs
     private ElementReference refEnunciado;
     private ElementReference refGabarito;
     private ElementReference refNovoDistrator;
 
-    // Metadados
     private bool dropdownDisciplinasAberto = false;
     private string termoBuscaDisciplina = "";
     private string assuntosTextoFormulario = "";
@@ -309,25 +327,20 @@
     private string GetResumo(string? texto, string padrao) => 
         string.IsNullOrWhiteSpace(texto) ? padrao : (texto.Length > 25 ? texto.Substring(0, 25) + "..." : texto);
 
-    // MÉTODOS DE AÇÃO BLINDADOS
+    protected override void OnInitialized()
+    {
+        novaQuestao.Enunciado = string.Empty; 
+    }
+
     private void SetMultiplaEscolha() => MudarTipo("multipla_escolha");
     private void SetCertoErrado() => MudarTipo("certo_errado");
     private void SetCerto() => distratorTemporario = "Certo";
     private void SetErrado() => distratorTemporario = "Errado";
 
-    // 1. Avanço Inteligente
     private async Task ProximaEtapa() 
     { 
-        if (novaQuestao.Alternativas.Count == 5 && etapaAtiva < 3) 
-        {
-            etapaAtiva = 3; 
-        } 
-        else 
-        {
-            etapaAtiva++; 
-            await Task.Delay(100); 
-            await AplicarFocoAutomatico();
-        }
+        if (novaQuestao.Alternativas.Count == 5 && etapaAtiva < 3) { etapaAtiva = 3; } 
+        else { etapaAtiva++; await Task.Delay(100); await AplicarFocoAutomatico(); }
     }
 
     private async Task AplicarFocoAutomatico()
@@ -336,49 +349,36 @@
             if (etapaAtiva == 0) await refEnunciado.FocusAsync();
             else if (etapaAtiva == 1) await refGabarito.FocusAsync();
             else if (etapaAtiva == 2) await refNovoDistrator.FocusAsync();
-        } catch { /* Proteção contra silos ainda ocultos */ }
+        } catch { }
     }
 
     private async Task AdicionarDistrator() {
         if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), Correta = false });
+        // 🚩 CORREÇÃO: Usando IsCorreta
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = false });
         distratorTemporario = "";
         
-        if (novaQuestao.Alternativas.Count(a => !a.Correta) >= 4) {
-            await ProximaEtapa();
-        } else {
-            await refNovoDistrator.FocusAsync();
-        }
+        if (novaQuestao.Alternativas.Count(a => !a.IsCorreta) >= 4) { await ProximaEtapa(); } 
+        else { await refNovoDistrator.FocusAsync(); }
     }
 
     private void AbrirEtapa(int etapa) 
     { 
-        if (etapaAtiva == etapa) 
-        {
-            etapaAtiva = -1;
-            distratorTemporario = ""; 
-            return;
-        }
-
+        if (etapaAtiva == etapa) { etapaAtiva = -1; distratorTemporario = ""; return; }
         etapaAtiva = etapa; 
-        
-        if (etapa == 1) 
-            distratorTemporario = novaQuestao.Alternativas.FirstOrDefault(a => a.Correta)?.Texto ?? "";
-        else if (etapa == 2) 
-            distratorTemporario = "";
+        if (etapa == 1) distratorTemporario = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta)?.Texto ?? "";
+        else if (etapa == 2) distratorTemporario = "";
     }
 
     private void AdicionarGabarito() 
     {
         if (string.IsNullOrWhiteSpace(distratorTemporario)) return;
-        
-        var gabaritoExistente = novaQuestao.Alternativas.FirstOrDefault(a => a.Correta);
-        if (gabaritoExistente != null) {
-            gabaritoExistente.Texto = distratorTemporario.Trim();
-        } else {
-            novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), Correta = true });
+        var gabaritoExistente = novaQuestao.Alternativas.FirstOrDefault(a => a.IsCorreta);
+        if (gabaritoExistente != null) { gabaritoExistente.Texto = distratorTemporario.Trim(); } 
+        else { 
+            // 🚩 CORREÇÃO: Usando IsCorreta
+            novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = distratorTemporario.Trim(), IsCorreta = true }); 
         }
-        
         distratorTemporario = "";
         ProximaEtapa(); 
     }
@@ -406,16 +406,17 @@
     private async Task SalvarQuestao()
     {
         if (string.IsNullOrWhiteSpace(novaQuestao.Enunciado)) { MostrarMensagem("A missão precisa de um enunciado.", "erro"); return; }
-        if (novaQuestao.Tipo == "multipla_escolha" && novaQuestao.Alternativas.Count != 5) { MostrarMensagem("O tabuleiro precisa de 5 peças exatas.", "erro"); return; }
+        if (novaQuestao.Tipo == "multipla_escolha" && novaQuestao.Alternativas.Count != 5) { MostrarMensagem("O tabuleiro precisa de 5 peças.", "erro"); return; }
         if (novaQuestao.Tipo == "certo_errado" && novaQuestao.Alternativas.Count != 2) { MostrarMensagem("A missão CE precisa de um gabarito.", "erro"); return; }        
-        if (!novaQuestao.Alternativas.Any(a => a.Correta)) { MostrarMensagem("A missão não possui uma verdade (gabarito).", "erro"); return; }
+        if (!novaQuestao.Alternativas.Any(a => a.IsCorreta)) { MostrarMensagem("A missão não possui uma verdade (gabarito).", "erro"); return; }
+
+        novaQuestao.Id = Guid.NewGuid();
+        novaQuestao.CriadorId = Guid.Parse(idCriadorTrabalhador);
 
         if (!string.IsNullOrWhiteSpace(assuntosTextoFormulario))
         {
             novaQuestao.Assuntos = assuntosTextoFormulario.Split(',').Select(a => a.Trim()).Where(a => !string.IsNullOrWhiteSpace(a)).ToList();
         }
-
-        novaQuestao.CriadorId = Guid.Parse(idCriadorTrabalhador);
 
         try
         {
@@ -423,10 +424,34 @@
             var response = await Http.PostAsync("/api/questoes", new StringContent(json, System.Text.Encoding.UTF8, "application/json"));
             
             if (response.IsSuccessStatusCode) {
-                MostrarMensagem("Vitória! Missão forjada e enviada à base.", "sucesso");
+                
+                // O LASTRO TEÓRICO
+                if (RecursoId.HasValue && !string.IsNullOrWhiteSpace(TrechoCapturado))
+                {
+                    var refQ = new ReferenciaQuestao
+                    {
+                        Id = Guid.NewGuid(),
+                        QuestaoId = novaQuestao.Id,
+                        RecursoId = RecursoId.Value,
+                        Trecho = new Dictionary<string, string> { { "texto", TrechoCapturado } }
+                    };
+                    
+                    var jsonRef = Newtonsoft.Json.JsonConvert.SerializeObject(refQ);
+                    var resRef = await Http.PostAsync("/api/referencias", new StringContent(jsonRef, System.Text.Encoding.UTF8, "application/json"));
+                    
+                    // 🚩 ALARME DE SEGURANÇA: Se a API recusar o lastro, vamos saber o porquê!
+                    if (!resRef.IsSuccessStatusCode)
+                    {
+                        var erroServidor = await resRef.Content.ReadAsStringAsync();
+                        MostrarMensagem($"Missão salva, mas o vínculo falhou: {erroServidor}", "erro");
+                        return; 
+                    }
+                }
+
+                MostrarMensagem("Vitória! Missão e lastro arquivados na base.", "sucesso");
                 ResetarForja();
             } else {
-                MostrarMensagem("A burocracia do servidor falhou. Tente novamente.", "erro");
+                MostrarMensagem("A burocracia do servidor falhou ao salvar a missão.", "erro");
             }
         }
         catch (Exception ex)
@@ -458,11 +483,10 @@
     private void ConfirmarGabaritoCE() 
     {
         if (string.IsNullOrEmpty(distratorTemporario)) return;
-        
         novaQuestao.Alternativas.Clear();
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Certo", Correta = distratorTemporario == "Certo" });
-        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Errado", Correta = distratorTemporario == "Errado" });
-        
-        etapaAtiva = 4; // O Salto Quântico! Pula os desvios e vai direto pras Tags.
+        // 🚩 CORREÇÃO: Usando IsCorreta
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Certo", IsCorreta = distratorTemporario == "Certo" });
+        novaQuestao.Alternativas.Add(new Alternativa { Id = Guid.NewGuid().ToString(), Texto = "Errado", IsCorreta = distratorTemporario == "Errado" });
+        etapaAtiva = 4;
     }
 }

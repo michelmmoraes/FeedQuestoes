@@ -1,4 +1,4 @@
-﻿@page "/feed-perfil/{CriadorId}/{QuestaoInicialId}"
+﻿@page "/feed-perfil/{CriadorId:guid}/{QuestaoInicialId:guid}"
 @using FeedQuestoes.Client.Modelos
 @inject HttpClient Http
 @inject NavigationManager NavManager
@@ -136,7 +136,7 @@ else
                     @if (!estado.Respondida)
                     {
                         <button class="btn-verificar" 
-                                disabled="@(string.IsNullOrEmpty(estado.AlternativaSelecionadaId))" 
+                                disabled="@(estado.AlternativaSelecionadaId == null)" 
                                 @onclick="() => ConfirmarResposta(estado)">
                             Verificar Resposta
                         </button>
@@ -160,8 +160,8 @@ else
 }
 
 @code {
-    [Parameter] public string CriadorId { get; set; }
-    [Parameter] public string QuestaoInicialId { get; set; }
+    [Parameter] public Guid CriadorId { get; set; }
+    [Parameter] public Guid QuestaoInicialId { get; set; }
 
     private class EstadoCardQuestao
     {
@@ -184,15 +184,12 @@ else
             var jsonBusca = await Http.GetStringAsync("/api/questoes");
             var todasQuestoes = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Questao>>(jsonBusca) ?? new();
             
-            var criadorGuid = Guid.Parse(CriadorId);
-            var questaoInicialGuid = Guid.Parse(QuestaoInicialId);
-
             var vitrine = todasQuestoes
-                .Where(q => q.CriadorId == criadorGuid)
+                .Where(q => q.CriadorId == CriadorId)
                 .OrderByDescending(q => q.CriadoEm)
                 .ToList();
 
-            var questaoTopo = vitrine.FirstOrDefault(q => q.Id == questaoInicialGuid);
+            var questaoTopo = vitrine.FirstOrDefault(q => q.Id == QuestaoInicialId);
             if (questaoTopo != null)
             {
                 vitrine.Remove(questaoTopo);
@@ -223,24 +220,24 @@ else
             return estado.AlternativaSelecionadaId == altId ? "selecionada" : "";
 
         var alt = estado.Questao.Alternativas.First(a => a.Id == altId);
-        if (alt.Correta) return "correta-revelada desativada";
-        if (estado.AlternativaSelecionadaId == altId && !alt.Correta) return "errada-revelada desativada";
+        if (alt.IsCorreta) return "correta-revelada desativada";
+        if (estado.AlternativaSelecionadaId == altId && !alt.IsCorreta) return "errada-revelada desativada";
         return "desativada opacity-50";
     }
 
     private async Task ConfirmarResposta(EstadoCardQuestao estado)
     {
-        if (string.IsNullOrEmpty(estado.AlternativaSelecionadaId)) return;
+        if (estado.AlternativaSelecionadaId == null) return;
 
         var altEscolhida = estado.Questao.Alternativas.First(a => a.Id == estado.AlternativaSelecionadaId);
         estado.Respondida = true;
-        estado.Acertou = altEscolhida.Correta;
+        estado.Acertou = altEscolhida.IsCorreta;
 
         var novaResposta = new Resposta
         {
             RespondidoPor = Guid.Parse(idTrabalhador),
             QuestaoId = estado.Questao.Id,
-            Correta = altEscolhida.Correta
+            Correta = altEscolhida.IsCorreta
         };
 
         try

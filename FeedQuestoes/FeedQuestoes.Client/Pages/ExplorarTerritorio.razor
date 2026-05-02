@@ -1,55 +1,144 @@
 ﻿@page "/territorio/{Id:guid}"
 @using FeedQuestoes.Client.Modelos
+@using System.Globalization
 @inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager NavManager
 
 <PageTitle>Explorar Assunto | Base Coletiva</PageTitle>
 
-<div class="container-fluid py-4" style="max-width: 600px; margin: 0 auto;">
+<style>
+    .btn-mais-fantasma {
+        position: fixed;
+        transform: translate(8px, -50%);
+        background: #1cb0f6;
+        color: white;
+        font-weight: 900;
+        font-size: 1.4rem;
+        line-height: 1;
+        border: none;
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 9999;
+        cursor: pointer;
+        display: flex; align-items: center; justify-content: center;
+        animation: surgirPop 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .btn-mais-fantasma:active { 
+        transform: translate(8px, calc(-50% + 2px)); 
+        box-shadow: 0 2px 6px rgba(0,0,0,0.3); 
+    }
+    @@keyframes surgirPop { 
+        from { opacity: 0; transform: translate(8px, -50%) scale(0.5); } 
+        to { opacity: 1; transform: translate(8px, -50%) scale(1); } 
+    }
     
-    @* Cabeçalho de Identificação *@
-    <div class="d-flex align-items-center mb-4">
-        <span class="fs-1 me-3">📚</span>
-        <div>
-            <h4 class="fw-bold text-dark mb-0">Reconhecimento de Assunto</h4>
-            <small class="text-muted fw-bold">Setor: @Id.ToString().Substring(0, 8)</small>
-        </div>
-    </div>
+    .area-leitura-segura {
+        -webkit-touch-callout: none;
+    }
+</style>
 
+@if (selecaoAtiva)
+{
+    @* O Escudo: @onmousedown:stopPropagation="true" impede que clicar no botão acione a limpeza da tela *@
+    <button class="btn-mais-fantasma" 
+            style="left: @(posicaoX.ToString(CultureInfo.InvariantCulture))px; top: @(posicaoY.ToString(CultureInfo.InvariantCulture))px;" 
+            @onclick="CapturarParaForjaOculta" 
+            @onmousedown:stopPropagation="true"
+            title="Forjar Questão">
+        +
+    </button>
+}
+
+@* AQUI ESTÁ A MÁGICA: @onmousedown="OcultarBotaoImediatamente" fará o botão sumir no milissegundo do toque *@
+<div class="container-fluid py-4" style="max-width: 600px; margin: 0 auto; font-family: 'Segoe UI', system-ui, sans-serif;" 
+     @onmouseup="VerificarSelecao" 
+     @onmousedown="OcultarBotaoImediatamente"
+     @oncontextmenu:preventDefault="true">
+    
     @if (carregando)
     {
         <div class="text-center p-5">
             <div class="spinner-border text-primary" role="status"></div>
-            <p class="mt-2 fw-bold text-muted">Consultando arquivos centrais...</p>
+            <p class="mt-2 fw-bold text-muted">Mapeando território e arsenais...</p>
         </div>
     }
     else if (assuntoAtual == null)
     {
-        <div class="alert alert-warning border-2 rounded-4">
-            <h5 class="fw-bold">⚠️ Assunto não catalogado</h5>
-            <p class="mb-0">Este território ainda não possui registros em nossa base de dados.</p>
-        </div>
+        <div class="alert alert-warning border-2 rounded-4 fw-bold">⚠️ Assunto não catalogado nos arquivos centrais.</div>
     }
     else
     {
-        @* Conteúdo Principal do Assunto *@
-        <div class="card border-0 shadow-sm rounded-4 overflow-hidden mb-4">
-            <div class="card-body p-4">
-                <h2 class="fw-black text-primary mb-3">@assuntoAtual.Nome</h2>
-                <div class="text-secondary fs-5" style="line-height: 1.6;">
-                    @assuntoAtual.Descricao
+        @if (recursoLeituraAtiva == null)
+        {
+            <div class="d-flex align-items-center mb-4">
+                <span class="fs-1 me-3">📚</span>
+                <div>
+                    <h4 class="fw-black text-dark mb-0">@assuntoAtual.Nome</h4>
+                    <small class="text-muted fw-bold text-uppercase" style="letter-spacing: 1px;">Setor: @Id.ToString().Substring(0, 8)</small>
                 </div>
             </div>
-        </div>
 
-        @* Zona de Ação: Onde o conhecimento é posto em prática *@
-        <div class="d-grid gap-2">
-            <button class="btn btn-primary btn-lg rounded-pill fw-bold shadow-sm">
-                Iniciar Missão de Estudo ⚔️
-            </button>
-            <button class="btn btn-outline-secondary rounded-pill fw-bold">
-                Ver Materiais Coletivos 📖
-            </button>
-        </div>
+            <div class="card border-0 shadow-sm rounded-4 mb-4">
+                <div class="card-body p-4 bg-white rounded-4">
+                    <p class="text-secondary mb-0" style="line-height: 1.6; font-weight: 500;">
+                        @assuntoAtual.Descricao
+                    </p>
+                </div>
+            </div>
+
+            <h6 class="fw-black text-uppercase mb-3 px-2" style="color: #afafaf; letter-spacing: 1px;">Arsenal Teórico</h6>
+            
+            @if (listaRecursos == null || !listaRecursos.Any())
+            {
+                <div class="text-center p-4 bg-light border-2 rounded-4" style="border: 2px dashed #e5e7eb;">
+                    <span class="fs-2 mb-2 d-block">📄</span>
+                    <span class="fw-bold text-muted text-uppercase" style="font-size: 0.85rem;">Nenhum material forjado para este setor ainda.</span>
+                </div>
+            }
+            else
+            {
+                <div class="d-grid gap-3">
+                    @foreach (var recurso in listaRecursos)
+                    {
+                        <div class="card border-2 rounded-4 shadow-sm" style="cursor:pointer; transition: transform 0.1s; border-color: #e5e7eb;"
+                             @onclick="() => AbrirRecurso(recurso)"
+                             onmouseover="this.style.borderColor='#1cb0f6'; this.style.transform='translateY(-2px)';"
+                             onmouseout="this.style.borderColor='#e5e7eb'; this.style.transform='translateY(0)';">
+                            <div class="card-body p-3 d-flex align-items-center gap-3">
+                                <div style="background: #eef2f6; border-radius: 12px; padding: 12px;">
+                                    <span class="fs-4">📖</span>
+                                </div>
+                                <div class="flex-grow-1">
+                                    <h6 class="fw-bold mb-1 text-dark">@recurso.Titulo</h6>
+                                    <small class="text-muted fw-bold">Material de Estudo</small>
+                                </div>
+                                <span class="fw-bold text-primary fs-5">➔</span>
+                            </div>
+                        </div>
+                    }
+                </div>
+            }
+        }
+        else
+        {
+            <div class="mb-4 d-flex align-items-center justify-content-between">
+                <button class="btn btn-light border-2 fw-bold rounded-pill text-muted px-4" @onclick="FecharRecurso">
+                    ◀ Retornar ao Mapa
+                </button>
+            </div>
+
+            <div class="card border-2 shadow-sm rounded-4 area-leitura-segura" style="border-color: #e5e7eb;">
+                <div class="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
+                    <h3 class="fw-black" style="color: #4b4b4b;">@recursoLeituraAtiva.Titulo</h3>
+                </div>
+                <div class="card-body p-4 pt-2">
+                    <VisualizadorMarkdown ConteudoBruto="@recursoLeituraAtiva.ConteudoMarkdown" />
+                </div>
+            </div>
+        }
     }
 </div>
 
@@ -58,27 +147,86 @@
     
     private bool carregando = true;
     private Assunto? assuntoAtual;
+    private List<Recurso> listaRecursos = new();
+    private Recurso? recursoLeituraAtiva = null;
+
+    private bool selecaoAtiva = false;
+    private double posicaoX = 0;
+    private double posicaoY = 0;
+    private string textoExtraido = "";
 
     protected override async Task OnInitializedAsync()
     {
         try
         {
-            // O front-end faz a requisição direta para a Minimal API
-            var response = await Http.GetAsync($"/api/territorios/{Id}");
-            
-            if (response.IsSuccessStatusCode)
-            {
-                var json = await response.Content.ReadAsStringAsync();
-                assuntoAtual = Newtonsoft.Json.JsonConvert.DeserializeObject<Assunto>(json);
-            }
+            var taskAssunto = Http.GetStringAsync($"/api/territorios/{Id}");
+            var taskRecursos = Http.GetStringAsync($"/api/territorios/{Id}/recursos");
+
+            await Task.WhenAll(taskAssunto, taskRecursos);
+
+            assuntoAtual = Newtonsoft.Json.JsonConvert.DeserializeObject<Assunto>(await taskAssunto);
+            listaRecursos = Newtonsoft.Json.JsonConvert.DeserializeObject<List<Recurso>>(await taskRecursos) ?? new();
         }
         catch (Exception ex)
         {
-            Console.WriteLine($"Erro na extração de dados: {ex.Message}");
+            Console.WriteLine($"Erro na extração: {ex.Message}");
         }
         finally
         {
             carregando = false;
         }
+    }
+
+    private void AbrirRecurso(Recurso recurso) => recursoLeituraAtiva = recurso;
+
+    private void FecharRecurso()
+    {
+        recursoLeituraAtiva = null;
+        selecaoAtiva = false;
+    }
+
+    // NOVA FUNÇÃO: Oculta o botão instantaneamente ao tocar na tela
+    private void OcultarBotaoImediatamente()
+    {
+        if (selecaoAtiva)
+        {
+            selecaoAtiva = false;
+            // O Blazor já chama StateHasChanged automaticamente em eventos como onmousedown
+        }
+    }
+
+    private async Task VerificarSelecao()
+    {
+        if (recursoLeituraAtiva == null) return;
+
+        await Task.Delay(50); 
+        
+        var resultado = await JS.InvokeAsync<SelecaoJS>("obterSelecaoTatica");
+
+        if (resultado != null && !string.IsNullOrWhiteSpace(resultado.Texto))
+        {
+            textoExtraido = resultado.Texto;
+            posicaoX = resultado.X;
+            posicaoY = resultado.Y;
+            selecaoAtiva = true;
+        }
+        else
+        {
+            selecaoAtiva = false;
+        }
+    }
+
+    private void CapturarParaForjaOculta()
+    {
+        JS.InvokeVoidAsync("limparSelecao");
+        var urlForja = $"/nova-questao?recursoId={recursoLeituraAtiva!.Id}&trecho={Uri.EscapeDataString(textoExtraido)}";
+        NavManager.NavigateTo(urlForja);
+    }
+
+    public class SelecaoJS
+    {
+        public string Texto { get; set; } = "";
+        public double X { get; set; }
+        public double Y { get; set; }
     }
 }

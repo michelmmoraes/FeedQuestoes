@@ -93,7 +93,7 @@ else
                     @if (!estado.Respondida)
                     {
                         <button class="btn-verificar" 
-                                disabled="@(string.IsNullOrEmpty(estado.AlternativaSelecionadaId))" 
+                                disabled="@(estado.AlternativaSelecionadaId == null)" 
                                 @onclick="() => ConfirmarResposta(estado)">
                             Verificar Resposta
                         </button>
@@ -149,12 +149,14 @@ else
         }
     }
 
+    // CORREÇÃO DO PARÂMETRO PARA GUID
     private void SelecionarAlternativa(EstadoCardQuestao estado, string id)
     {
         if (estado.Respondida) return;
         estado.AlternativaSelecionadaId = id;
     }
 
+    // CORREÇÃO DO PARÂMETRO PARA GUID
     private string ObterClasseAlternativa(EstadoCardQuestao estado, string altId)
     {
         if (!estado.Respondida)
@@ -163,25 +165,25 @@ else
         }
 
         var alt = estado.Questao.Alternativas.First(a => a.Id == altId);
-        if (alt.Correta) return "correta-revelada desativada";
-        if (estado.AlternativaSelecionadaId == altId && !alt.Correta) return "errada-revelada desativada";
+        if (alt.IsCorreta) return "correta-revelada desativada";
+        if (estado.AlternativaSelecionadaId == altId && !alt.IsCorreta) return "errada-revelada desativada";
         return "desativada opacity-50";
     }
 
     private async Task ConfirmarResposta(EstadoCardQuestao estado)
     {
-        if (string.IsNullOrEmpty(estado.AlternativaSelecionadaId)) return;
+        if (estado.AlternativaSelecionadaId == null) return;
 
         var altEscolhida = estado.Questao.Alternativas.First(a => a.Id == estado.AlternativaSelecionadaId);
         
         estado.Respondida = true;
-        estado.Acertou = altEscolhida.Correta;
+        estado.Acertou = altEscolhida.IsCorreta;
 
         var novaResposta = new Resposta
         {
             RespondidoPor = Guid.Parse(idTrabalhador),
             QuestaoId = estado.Questao.Id,
-            Correta = altEscolhida.Correta
+            Correta = altEscolhida.IsCorreta
         };
 
         try
